@@ -1,0 +1,8 @@
+CREATE TABLE map (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY, 
+    user_id VARCHAR(20) NOT NULL,
+    map VARCHAR(7) NOT NULL,
+
+    UNIQUE(user_id, map),
+    FOREIGN KEY user_id REFERENCES user(id) ON DELETE CASCADE
+);
