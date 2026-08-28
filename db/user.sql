@@ -1,7 +1,0 @@
-CREATE TABLE user (
-    id VARCHAR(20) PRIMARY KEY,
-    password VARCHAR(60) NOT NULL,
-    
-    name VARCHAR(20) NOT NULL,
-    point INTEGER UNSIGNED NOT NULL DEFAULT 500
-);
