@@ -1,1 +1,1346 @@
 /*전역 스타일 CSS*/
+/* =========================
+   기본
+========================= */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+
+    background-color: #f6f8fc;
+    color: #202938;
+
+    font-family:
+        Arial,
+        "Noto Sans KR",
+        sans-serif;
+}
+
+
+/* =========================
+   Navbar
+========================= */
+
+.navbar {
+    height: 72px;
+}
+
+.navbar-brand {
+    color: #202938;
+    font-size: 24px;
+}
+
+.navbar-brand:hover {
+    color: #2563eb;
+}
+
+.navbar-nav {
+    display: flex;
+    gap: 24px;
+}
+
+.nav-link {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    color: #2563eb;
+}
+
+.nav-link.active {
+    color: #2563eb;
+    font-weight: 700;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.point {
+    font-weight: 700;
+}
+
+.profile-btn {
+    padding: 8px 16px;
+
+    border: none;
+    border-radius: 20px;
+
+    background-color: #eef2ff;
+    color: #2563eb;
+
+    font-weight: 600;
+}
+
+
+/* =========================
+   Hero
+========================= */
+
+.hero {
+    padding: 50px 0 35px;
+}
+
+.hero h1 {
+    margin-bottom: 12px;
+    font-size: 40px;
+    font-weight: 800;
+}
+
+.hero-description {
+    margin: 0;
+    color: #2563eb;
+}
+
+
+/* =========================
+   Main
+========================= */
+
+.main-section {
+    padding-bottom: 80px;
+}
+
+
+/* =========================
+   지도
+========================= */
+
+.map-card {
+    margin-bottom: 20px;
+    padding: 24px;
+
+    background-color: white;
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 6px 25px rgba(0, 0, 0, 0.05);
+}
+
+.map-header {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 18px;
+}
+
+.map-header span {
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+.map-header h2 {
+    margin: 4px 0 0;
+
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.region-btn {
+    padding: 8px 14px;
+
+    border: 1px solid #dbe1ea;
+    border-radius: 10px;
+
+    background-color: white;
+    color: #4b5563;
+
+    font-weight: 500;
+}
+
+.region-btn:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+}
+
+
+/* 지도 영역 */
+
+.map {
+    width: 100%;
+    height: 440px;
+
+    overflow: hidden;
+
+    border-radius: 15px;
+
+    background-color: #eef2f7;
+}
+
+.map-placeholder {
+    height: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+    align-items: center;
+
+    color: #9ca3af;
+}
+
+.map-placeholder span {
+    font-size: 50px;
+}
+
+.map-placeholder p {
+    margin: 10px 0 4px;
+
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* =========================
+   현재 날씨
+========================= */
+
+.weather-card {
+    padding: 25px;
+
+    background-color: white;
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 6px 25px rgba(0, 0, 0, 0.05);
+}
+
+.weather-header {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+}
+
+.weather-label {
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+.weather-header h2 {
+    margin: 4px 0 0;
+
+    font-size: 24px;
+}
+
+.weather-date {
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+
+/* 현재 온도 */
+
+.weather-main {
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 25px 0;
+}
+
+.weather-icon {
+    font-size: 52px;
+}
+
+.temperature {
+    font-size: 55px;
+    font-weight: 800;
+}
+
+.weather-status {
+    color: #6b7280;
+    font-size: 18px;
+}
+
+
+/* 상세 정보 */
+
+.weather-detail {
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+
+    padding-top: 20px;
+
+    border-top: 1px solid #edf0f5;
+}
+
+.weather-detail div {
+    text-align: center;
+}
+
+.weather-detail span {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #9ca3af;
+    font-size: 13px;
+}
+
+.weather-detail strong {
+    font-size: 17px;
+}
+
+
+/* =========================
+   예측 카드
+========================= */
+
+.prediction-card {
+    padding: 30px;
+
+    background-color: white;
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 6px 25px rgba(0, 0, 0, 0.05);
+}
+
+.prediction-title {
+    margin-bottom: 28px;
+}
+
+.prediction-title h2 {
+    margin-bottom: 7px;
+
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.prediction-title p {
+    margin: 0;
+
+    color: #6b7280;
+    font-size: 14px;
+}
+
+
+/* =========================
+   Form
+========================= */
+
+.form-group {
+    margin-bottom: 23px;
+}
+
+.form-group label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    font-weight: 600;
+}
+
+.form-group small {
+    display: block;
+
+    margin-top: 7px;
+
+    color: #9ca3af;
+    font-size: 12px;
+}
+
+
+/* =========================
+   예측 대상
+========================= */
+
+.prediction-types {
+    display: grid;
+
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 8px;
+}
+
+.prediction-type {
+    padding: 12px;
+
+    border: 1px solid #dfe3eb;
+    border-radius: 10px;
+
+    background-color: white;
+    color: #4b5563;
+
+    font-weight: 600;
+}
+
+.prediction-type:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+}
+
+.prediction-type.active {
+    border-color: #2563eb;
+
+    background-color: #eff6ff;
+    color: #2563eb;
+}
+
+
+/* =========================
+   배팅
+========================= */
+
+.betting-header {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+}
+
+.betting-header label {
+    margin-bottom: 0;
+}
+
+.betting-header strong {
+    color: #2563eb;
+}
+
+.betting-info {
+    display: flex;
+
+    justify-content: space-between;
+
+    color: #9ca3af;
+    font-size: 12px;
+}
+
+
+/* =========================
+   보상
+========================= */
+
+.reward-box {
+    margin: 25px 0;
+    padding: 17px;
+
+    border-radius: 12px;
+
+    background-color: #f5f7ff;
+}
+
+.reward-box div {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+}
+
+.reward-box span {
+    font-weight: 600;
+}
+
+.reward-box strong {
+    color: #2563eb;
+    font-size: 18px;
+}
+
+.reward-box p {
+    margin: 6px 0 0;
+
+    color: #9ca3af;
+    font-size: 12px;
+}
+
+
+/* =========================
+   예측 버튼
+========================= */
+
+.submit-btn {
+    width: 100%;
+
+    padding: 14px;
+
+    border: none;
+    border-radius: 11px;
+
+    background-color: #2563eb;
+    color: white;
+
+    font-size: 16px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.submit-btn:hover {
+    background-color: #1d4ed8;
+}
+
+
+/* =========================
+   반응형
+========================= */
+
+@media (max-width: 991px) {
+
+    .navbar {
+        height: auto;
+
+        padding: 15px 0;
+    }
+
+    .navbar-nav {
+        margin: 15px 0;
+
+        flex-direction: column;
+
+        gap: 5px;
+    }
+
+    .user-info {
+        margin-top: 10px;
+    }
+
+    .hero {
+        padding-top: 35px;
+    }
+
+    .hero h1 {
+        font-size: 32px;
+    }
+
+    .map {
+        height: 350px;
+    }
+
+}
+
+
+@media (max-width: 576px) {
+
+    .hero h1 {
+        font-size: 27px;
+    }
+
+    .map-card,
+    .weather-card,
+    .prediction-card {
+        padding: 20px;
+    }
+
+    .map {
+        height: 300px;
+    }
+
+    .weather-main {
+        gap: 10px;
+    }
+
+    .temperature {
+        font-size: 45px;
+    }
+
+    .weather-icon {
+        font-size: 40px;
+    }
+
+}
+
+
+.prediction-list-container {
+    height: calc(100vh - 70px);
+    padding: 30px;
+    overflow: hidden;
+}
+
+.prediction-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.prediction-list-header h1 {
+    margin: 0;
+    font-size: 40px;
+    font-weight: 800;
+}
+
+.prediction-list-header p {
+    margin: 6px 0 0;
+    color: #2563eb;
+    font-size: 13px;
+}
+
+.prediction-filter {
+    width: 130px;
+    height: 40px;
+}
+
+.prediction-list {
+    height: calc(100% - 85px);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.prediction-list-card {
+    flex-shrink: 0;
+    padding: 20px 22px;
+    background: #ffffff;
+    border: 1px solid #e9edf2;
+    border-radius: 14px;
+}
+
+.prediction-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eef1f4;
+}
+
+.prediction-region {
+    margin-right: 12px;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.prediction-time {
+    color: #9299a2;
+    font-size: 12px;
+}
+
+.prediction-status {
+    padding: 6px 11px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.status-progress {
+    background: #f0f4f8;
+    color: #59636e;
+}
+
+.status-success {
+    background: #eef7f1;
+    color: #3d7a52;
+}
+
+.status-fail {
+    background: #f8eeee;
+    color: #a35a5a;
+}
+
+.prediction-card-info {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding-top: 15px;
+}
+
+.prediction-card-info div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.prediction-card-info span {
+    color: #9299a2;
+    font-size: 11px;
+}
+
+.prediction-card-info strong {
+    font-size: 14px;
+}
+
+.prediction-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.prediction-list::-webkit-scrollbar-thumb {
+    background: #d9dee3;
+    border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+    .prediction-list-container {
+        height: auto;
+        min-height: calc(100vh - 70px);
+        padding: 20px 15px;
+        overflow: visible;
+    }
+
+    .prediction-list-header {
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .prediction-list {
+        height: auto;
+        overflow: visible;
+    }
+
+    .prediction-card-info {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+}
+
+
+.shop-container {
+    height: calc(100vh - 70px);
+    padding: 25px 30px;
+    overflow: hidden;
+}
+
+.shop-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.shop-header h1 {
+    margin: 0;
+    font-size: 40px;
+    font-weight: 800;
+}
+
+.shop-header p {
+    margin: 6px 0 0;
+    color: #2563eb;
+    font-size: 13px;
+}
+
+.shop-content {
+    height: calc(100% - 80px);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.shop-section {
+    flex: 1;
+    min-height: 0;
+}
+
+.shop-section-header {
+    margin-bottom: 10px;
+}
+
+.shop-section-header h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.shop-section-header p {
+    margin: 3px 0 0;
+    color: #9299a2;
+    font-size: 11px;
+}
+
+.shop-items {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.shop-item {
+    min-width: 0;
+    padding: 16px;
+    background: #ffffff;
+    border: 1px solid #e9edf2;
+    border-radius: 13px;
+}
+
+.shop-item-image {
+    height: 90px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+    background: #f5f7f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+}
+
+.shop-item-info h3 {
+    margin: 0 0 5px;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.shop-item-info p {
+    height: 32px;
+    margin: 0;
+    color: #9299a2;
+    font-size: 10px;
+    line-height: 16px;
+}
+
+.shop-item-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+}
+
+.shop-item-bottom strong {
+    font-size: 13px;
+}
+
+.shop-buy-button {
+    min-width: 55px;
+    height: 30px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 7px;
+    background: #20252b;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.shop-buy-button:hover {
+    background: #343a40;
+}
+
+@media (max-width: 991px) {
+    body {
+        overflow: auto;
+    }
+
+    .shop-container {
+        height: auto;
+        min-height: calc(100vh - 70px);
+        overflow: visible;
+    }
+
+    .shop-content {
+        height: auto;
+    }
+
+    .shop-items {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .shop-container {
+        padding: 20px 15px;
+    }
+
+    .shop-header {
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .shop-point {
+        min-width: 120px;
+    }
+
+    .shop-items {
+        grid-template-columns: 1fr;
+    }
+}
+.collection-container {
+    height: calc(100vh - 70px);
+    padding: 25px 30px;
+    overflow: hidden;
+}
+
+.collection-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.collection-header h1 {
+    margin: 0;
+    font-size: 40px;
+    font-weight: 800;
+}
+
+.collection-header p {
+    margin: 6px 0 0;
+    color: #2563eb;
+    font-size: 13px;
+}
+
+.collection-progress {
+    min-width: 130px;
+    padding: 10px 15px;
+    border: 1px solid #e9edf2;
+    border-radius: 10px;
+    background: #ffffff;
+    text-align: right;
+}
+
+.collection-progress span {
+    display: block;
+    margin-bottom: 3px;
+    color: #9299a2;
+    font-size: 11px;
+}
+
+.collection-progress strong {
+    font-size: 16px;
+}
+
+.collection-tabs {
+    display: flex;
+    gap: 7px;
+    margin-bottom: 18px;
+}
+
+.collection-tab {
+    height: 34px;
+    padding: 0 15px;
+    border: 1px solid #e1e6eb;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #737b84;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.collection-tab.active {
+    border-color: #20252b;
+    background: #20252b;
+    color: #ffffff;
+}
+
+.collection-section {
+    margin-bottom: 18px;
+}
+
+.collection-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 9px;
+}
+
+.collection-section-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.collection-section-header span {
+    color: #9299a2;
+    font-size: 11px;
+}
+
+.collection-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.collection-item {
+    position: relative;
+    min-width: 0;
+    padding: 13px;
+    border: 1px solid #e9edf2;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.collection-image {
+    height: 70px;
+    margin-bottom: 9px;
+    border-radius: 9px;
+    background: #f5f7f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+}
+
+.collection-item h3 {
+    margin: 0 0 3px;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.collection-item p {
+    height: 15px;
+    margin: 0;
+    color: #9299a2;
+    font-size: 9px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.collection-state {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 7px;
+    border-radius: 5px;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.owned .collection-state {
+    background: #f0f4f8;
+    color: #59636e;
+}
+
+.locked .collection-image {
+    filter: grayscale(1);
+    opacity: 0.35;
+}
+
+.locked h3 {
+    color: #a2a8ae;
+}
+
+.locked .collection-state {
+    background: #f3f3f3;
+    color: #a2a8ae;
+}
+
+@media (max-width: 991px) {
+    body {
+        overflow: auto;
+    }
+
+    .collection-container {
+        height: auto;
+        min-height: calc(100vh - 70px);
+        overflow: visible;
+    }
+
+    .collection-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .collection-container {
+        padding: 20px 15px;
+    }
+
+    .collection-header {
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .collection-progress {
+        min-width: 100px;
+    }
+
+    .collection-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.ranking-container {
+    height: calc(100vh - 70px);
+    padding: 25px 30px;
+    overflow: hidden;
+}
+
+.ranking-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.ranking-header h1 {
+    margin: 0;
+    font-size: 40px;
+    font-weight: 800;
+}
+
+.ranking-header p {
+    margin: 6px 0 0;
+    color: #2563eb;
+    font-size: 13px;
+}
+
+.ranking-tabs {
+    display: flex;
+    gap: 7px;
+}
+
+.ranking-tab {
+    height: 36px;
+    padding: 0 15px;
+    border: 1px solid #e1e6eb;
+    border-radius: 8px;
+    background: #fff;
+    color: #737b84;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ranking-tab.active {
+    border-color: #20252b;
+    background: #20252b;
+    color: #fff;
+}
+
+.ranking-top3 {
+    height: 280px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 18px;
+}
+
+.rank-card {
+    position: relative;
+    width: 190px;
+    text-align: center;
+}
+
+.rank-card h2 {
+    margin: 8px 0 3px;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.rank-card p {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.rank-profile {
+    position: relative;
+    z-index: 2;
+    width: 65px;
+    height: 65px;
+    margin: 0 auto 8px;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    background: #f5f7f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .08);
+}
+
+.rank-number {
+    position: absolute;
+    z-index: 3;
+    top: 48px;
+    left: 50%;
+    transform: translateX(17px);
+    width: 23px;
+    height: 23px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.podium {
+    width: 100%;
+    margin-top: 10px;
+    border-radius: 10px 10px 0 0;
+}
+
+.podium-first {
+    height: 95px;
+}
+
+.podium-second {
+    height: 65px;
+}
+
+.podium-third {
+    height: 45px;
+}
+
+.rank-first .rank-number {
+    background: #d9ad38;
+    color: #fff;
+}
+
+.rank-first .rank-profile {
+    border-color: #d9ad38;
+}
+
+.rank-first .podium {
+    background: #ead18a;
+}
+
+.rank-second .rank-number {
+    background: #9da5ad;
+    color: #fff;
+}
+
+.rank-second .rank-profile {
+    border-color: #9da5ad;
+}
+
+.rank-second .podium {
+    background: #cbd0d5;
+}
+
+.rank-third .rank-number {
+    background: #b77b4c;
+    color: #fff;
+}
+
+.rank-third .rank-profile {
+    border-color: #b77b4c;
+}
+
+.rank-third .podium {
+    background: #d1a27d;
+}
+
+.ranking-list-section {
+    height: calc(100% - 330px);
+}
+
+.ranking-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 9px;
+}
+
+.ranking-list-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.ranking-list-header span {
+    color: #9299a2;
+    font-size: 11px;
+}
+
+.ranking-list {
+    height: calc(100% - 30px);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.ranking-item {
+    min-height: 55px;
+    padding: 8px 18px;
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e9edf2;
+    border-radius: 11px;
+}
+
+.ranking-number {
+    width: 30px;
+    color: #737b84;
+    font-size: 14px;
+    text-align: center;
+}
+
+.ranking-profile {
+    width: 38px;
+    height: 38px;
+    margin: 0 13px;
+    border: 0;
+    font-size: 20px;
+}
+
+.ranking-user {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ranking-user strong {
+    font-size: 13px;
+}
+
+.ranking-user span {
+    color: #9299a2;
+    font-size: 9px;
+}
+
+.ranking-point {
+    font-size: 13px;
+}
+
+.ranking-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.ranking-list::-webkit-scrollbar-thumb {
+    background: #d9dee3;
+    border-radius: 10px;
+}
+
+@media (max-width: 991px) {
+    .ranking-container {
+        height: auto;
+        min-height: calc(100vh - 70px);
+        overflow: visible;
+    }
+
+    .ranking-top3 {
+        height: 260px;
+    }
+}
+
+@media (max-width: 768px) {
+    .ranking-container {
+        padding: 20px;
+    }
+
+    .ranking-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .ranking-top3 {
+        height: 240px;
+        gap: 5px;
+    }
+
+    .rank-card {
+        width: 32%;
+    }
+
+    .rank-profile {
+        width: 52px;
+        height: 52px;
+        font-size: 25px;
+    }
+
+    .ranking-item {
+        padding: 8px 10px;
+    }
+}
