@@ -4,17 +4,356 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>SkyPick</title>
-
-    <!-- Bootstrap -->
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    >
-
-    <!-- SkyPick CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../style.css">
+    <style>
+        .hero {
+            padding: 50px 0 35px;
+        }
+
+        .hero h1 {
+            margin-bottom: 12px;
+            font-size: 40px;
+            font-weight: 800;
+        }
+
+        .hero-description {
+            margin: 0;
+            color: #2563eb;
+        }
+
+        .main-section {
+            padding-bottom: 80px;
+        }
+
+        .map-card {
+            margin-bottom: 20px;
+            padding: 24px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .map-header span {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .map-header h2 {
+            margin: 4px 0 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .region-btn {
+            padding: 8px 14px;
+            border: 1px solid #dbe1ea;
+            border-radius: 10px;
+            background-color: white;
+            color: #4b5563;
+            font-weight: 500;
+        }
+
+        .region-btn:hover {
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+
+        .map {
+            width: 100%;
+            height: 440px;
+            overflow: hidden;
+            border-radius: 15px;
+            background-color: #eef2f7;
+        }
+
+        .map-placeholder {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #9ca3af;
+        }
+
+        .map-placeholder span {
+            font-size: 50px;
+        }
+
+        .map-placeholder p {
+            margin: 10px 0 4px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .weather-card {
+            padding: 25px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        .weather-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .weather-label {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .weather-header h2 {
+            margin: 4px 0 0;
+            font-size: 24px;
+        }
+
+        .weather-date {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .weather-main {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 25px 0;
+        }
+
+        .weather-icon {
+            font-size: 52px;
+        }
+
+        .temperature {
+            font-size: 55px;
+            font-weight: 800;
+        }
+
+        .weather-status {
+            color: #6b7280;
+            font-size: 18px;
+        }
+
+        .weather-detail {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            padding-top: 20px;
+            border-top: 1px solid #edf0f5;
+        }
+
+        .weather-detail div {
+            text-align: center;
+        }
+
+        .weather-detail span {
+            display: block;
+            margin-bottom: 5px;
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .weather-detail strong {
+            font-size: 17px;
+        }
+
+        .prediction-card {
+            padding: 30px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        .prediction-title {
+            margin-bottom: 28px;
+        }
+
+        .prediction-title h2 {
+            margin-bottom: 7px;
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .prediction-title p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 23px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 7px;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .prediction-types {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .prediction-type {
+            padding: 12px;
+            border: 1px solid #dfe3eb;
+            border-radius: 10px;
+            background-color: white;
+            color: #4b5563;
+            font-weight: 600;
+        }
+
+        .prediction-type:hover {
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+
+        .prediction-type.active {
+            border-color: #2563eb;
+            background-color: #eff6ff;
+            color: #2563eb;
+        }
+
+        .betting-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .betting-header label {
+            margin-bottom: 0;
+        }
+
+        .betting-header strong {
+            color: #2563eb;
+        }
+
+        .betting-info {
+            display: flex;
+            justify-content: space-between;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .reward-box {
+            margin: 25px 0;
+            padding: 17px;
+            border-radius: 12px;
+            background-color: #f5f7ff;
+        }
+
+        .reward-box div {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reward-box span {
+            font-weight: 600;
+        }
+
+        .reward-box strong {
+            color: #2563eb;
+            font-size: 18px;
+        }
+
+        .reward-box p {
+            margin: 6px 0 0;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 11px;
+            background-color: #2563eb;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .submit-btn:hover {
+            background-color: #1d4ed8;
+        }
+
+        @media (max-width: 991px) {
+            .navbar {
+                height: auto;
+                padding: 15px 0;
+            }
+
+            .navbar-nav {
+                margin: 15px 0;
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .user-info {
+                margin-top: 10px;
+            }
+
+            .hero {
+                padding-top: 35px;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .map {
+                height: 350px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .hero h1 {
+                font-size: 27px;
+            }
+
+            .map-card,
+            .weather-card,
+            .prediction-card {
+                padding: 20px;
+            }
+
+            .map {
+                height: 300px;
+            }
+
+            .weather-main {
+                gap: 10px;
+            }
+
+            .temperature {
+                font-size: 45px;
+            }
+
+            .weather-icon {
+                font-size: 40px;
+            }
+        }
+    </style>
 </head>
 
 <body>
