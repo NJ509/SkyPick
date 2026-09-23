@@ -34,7 +34,7 @@ CREATE TABLE map (
     map VARCHAR(7) NOT NULL,
 
     UNIQUE(user_id, map),
-    FOREIGN KEY user_id REFERENCES user(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 );
 
 CREATE TABLE forecast(
@@ -52,7 +52,7 @@ CREATE TABLE forecast(
     is_correct BOOLEAN DEFAULT FALSE, -- 예측 성공 여부
     is_settled BOOLEAN DEFAULT FALSE, -- 정산 여부
 
-    FOREIGN KEY user_id REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
     INDEX idx_cooldown (user_id, submitted_at DESC) -- 쿨타임 조회용 (최적화)
 );
 
@@ -63,7 +63,7 @@ CREATE TABLE damagochi (
     level INTEGER NOT NULL DEFAULT 1,
     exp INTEGER NOT NULL DEFAULT 0,
 
-    FOREIGN KEY user_id REFERENCES user(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 );
 
 CREATE TABLE weekly_stat ( -- 주간랭킹용
@@ -71,5 +71,5 @@ CREATE TABLE weekly_stat ( -- 주간랭킹용
     success_count INTEGER UNSIGNED NOT NULL DEFAULT 0, -- 주간 예측 성공 횟수 (음수 불가)
     earned_point INTEGER NOT NULL DEFAULT 0, -- 주간 획득 포인트
 
-    FOREIGN KEY user_id REFERENCES user(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 );
