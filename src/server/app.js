@@ -1,10 +1,9 @@
-// 서버 실행 파일
+import http from "http";
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
-dotenv.config();
+import { getWeather } from "./weather.js";
 
-const http = require("http");
-const mysql = require("mysql2");
+dotenv.config();
 
 class Database {
   constructor() {
@@ -46,11 +45,32 @@ const db = new Database();
 export { db };
 
 const server = http
-  .createServer((request, response) => {
+  .createServer(async (request, response) => {
     response.setHeader("Access-Control-Allow-Origin", "*");
     response.setHeader("Content-Type", "application/json;charset=UTF-8");
     if (request.method === "GET") {
       if (request.url === "/") {
+      }else if (request.url.startsWith("/api/weather")) {
+        try {
+          const url = new URL(request.url, "http://localhost:3000");
+
+          const baseDate = url.searchParams.get("base_date");
+          const baseTime = url.searchParams.get("base_time");
+          const nx = url.searchParams.get("nx");
+          const ny = url.searchParams.get("ny");
+
+          const data = await getWeather(baseDate,baseTime,nx,ny);
+
+          response.writeHead(200);
+          response.end(JSON.stringify(data));
+          
+        } catch (error) {
+          console.error(error);
+          response.writeHead(500);
+        }
+      }
+      else {
+        response.writeHead(404);
       }
     } else if (request.method === "POST") {
     } else if (request.method === "PUT") {
