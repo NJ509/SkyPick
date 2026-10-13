@@ -3,6 +3,7 @@ import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 import http from "http";
 import userApi from "./js/api/user.js";
+import rankApi from "./js/api/rank.js";
 const result = dotenv.config({path: '../.env'});
 
 console.log("[LOG] env loaded: " +result);
@@ -66,8 +67,30 @@ const server = http
     response.setHeader("Content-Type", "application/json;charset=UTF-8");
 
     if (request.method === "GET") {
-      if (request.url === "/") {
-      }
+        const url = new URL(request.url, "http://localhost:3000");
+        const queryParams = url.searchParams;
+        let requestUrl = request.url;
+        if(requestUrl) {
+            requestUrl = requestUrl.slice(0, requestUrl.indexOf("?"));
+        }
+
+        let body = "";
+        request.on("data", (chunk) => {
+            body += chunk;
+        })
+
+        request.on("end", async () => {
+            try {
+                request.body = body ? JSON.parse(body) : {};
+
+                if (requestUrl === "/rank") {
+                    return await rankApi.showRanking(queryParams.get("type"));
+                }
+            } catch (e) {
+                console.log("[ERROR] " +e)
+                response.destroy();
+            }
+        })
     } else if (request.method === "POST") {
             let body = "";
 
