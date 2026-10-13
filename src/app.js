@@ -1,22 +1,25 @@
 // 서버 실행 파일
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
-dotenv.config();
+import http from "http";
+import userApi from "./js/api/user.js";
+const result = dotenv.config({path: '../.env'});
 
-const http = require("http");
-const mysql = require("mysql2");
-
+console.log("[LOG] env loaded: " +result);
 class Database {
   constructor() {
     this.db = mysql.createPool({
       host: process.env.db_host,
+      port: process.env.db_port,
       user: process.env.db_user,
       password: process.env.db_password,
       database: process.env.db_name,
     });
+    console.log("[LOG] DB CONNECTION SUCCESS");
   }
 
   getConnection() {
+    console.log("[LOG] DB CONNECTION REQUEST");
     return this.db.getConnection();
   }
 
@@ -40,6 +43,18 @@ class Database {
     const [row] = await this.db.execute(query, params);
     return row;
   }
+
+  /**
+   * 트랜잭션에서 DB 쿼리 실행
+   * @param {*} connection 트랜잭션 연결 객체
+   * @param {*} query 쿼리문
+   * @param  {...any} params 파라미터
+   * @returns 결과값
+   */
+  async executeQueryForTransaction(connection, query, ...params) {
+    const [row] = await connection.execute(query, params);
+    return row;
+  }
 }
 
 const db = new Database();
@@ -49,15 +64,43 @@ const server = http
   .createServer((request, response) => {
     response.setHeader("Access-Control-Allow-Origin", "*");
     response.setHeader("Content-Type", "application/json;charset=UTF-8");
+
     if (request.method === "GET") {
       if (request.url === "/") {
       }
     } else if (request.method === "POST") {
+            let body = "";
+
+            request.on("data", (chunk) => {
+                body += chunk;
+            });
+
+            request.on("end", async () => {
+                try {
+                request.body = body ? JSON.parse(body) : {};
+
+                if (request.url === "/login") {
+                    return await userApi.login(request, response);
+                }
+                if (request.url === "/signup") {
+                    return await userApi.signup(request, response);
+                }
+
+
+                response.writeHead(404);
+                response.end(JSON.stringify({error: "Not Found"}));
+                } catch (e) {
+                    console.log("[ERROR] " + e);
+                    response.destroy();
+                }
+            });
+
+            return;
     } else if (request.method === "PUT") {
     } else if (request.method === "DELETE") {
     } else {
-      response.writeHead(404);
-      response.end(JSON.stringify({ error: "Not Found" }));
+      response.writeHead(405);
+      response.end(JSON.stringify({ error: "지원되지 않는 메서드 요청 형식" }));
     }
   })
   .listen(3000, () => {

@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
-import db from "./app.js";
+import { db } from "./app.js";
+import {AUTH_RESULT} from "./js/enums/authResult.js";
 
 /**
  * 유저 로그인 처리
@@ -7,29 +8,39 @@ import db from "./app.js";
  * @param {*} password input pwd
  * @returns 성공 시 status: 200, 실패 시 ERROR
  */
-function doLogin(id, password) {
+async function doLogin(id, password) {
   if (!id || !password) throw new Error("ID OR PWD IS EMPTY");
 
   try {
-    // 여기 비번 맞는지 조회하고 확인하는 거 해야 함
+    console.log(`id=${id}, pwd=${password}`)
     const query = "SELECT id, password FROM user WHERE id = ?";
-    const row = db.executeQueryV(query, id);
+    const rows = await db.executeQueryV(query, id);
+    const row = rows[0];
 
-    if (!row || !verifyPwd(row.password, password))
+    if(row == undefined) {
+          return {
+              code: AUTH_RESULT.INVALID_CREDENTIALS,
+          }
+    }
+
+    const verifyedPwd = await verifyPwd(row.password, password); // 스펠링 verifyed가 맞나..?
+    if (!verifyedPwd)
       return {
-        status: 401, // unauthorized
-        message: "INVALID ID OR PASSWORD",
+        code: AUTH_RESULT.INVALID_CREDENTIALS,
       };
-
-    localStorage.setItem("userId", id);
+    else if (verifyedPwd)
+      return {
+        code: AUTH_RESULT.SUCCESS,
+        userId: row.id,
+      };
+    else
+      return {
+        code: AUTH_RESULT.FAILED,
+      };
   } catch (error) {
-    throw new Error("LOCAL STORAGE OR DB SELECt ERROR");
+    console.log("[ERROR] LOGIN: "+ error);
+    throw error;
   }
-
-  return {
-    status: 200,
-    message: "LOGIN SUCCESS",
-  };
 }
 
 /**
@@ -45,55 +56,79 @@ function doLogin(id, password) {
  * @returns 회원가입 성공 시 status: 201, 실패 시 status: 409
  */
 async function signup(id, password, name, map) {
-  if (!id || !password || !name) throw new Error("ID OR PWD OR NAME IS EMPTY");
-
-  const query = "INSERT INTO user (id, password, name) VALUES (?, ?, ?)";
-  const hashedPassword = hashPassword(password);
-
+  console.log("[LOG] SIGNUP REQUEST: ", id);
+  const connection = await db.getConnection();
   try {
-    // const connection = await db.getConnection();
-    // connection.beginTransaction();
+    await connection.beginTransaction();
 
-    db.executeQueryV(query, id, hashedPassword, name);
-    newMap(id, map);
+    const query = "INSERT INTO user (id, password, name) VALUES (?, ?, ?)";
+    const hashedPassword = await hashPassword(password);
 
-    // connection.commit();
+    const result = await db.executeQueryForTransaction(
+      connection,
+      query,
+      id,
+      hashedPassword,
+      name,
+    );
+    console.log("[LOG] SIGNUP SUCCESS: ", result ? true : false);
+
+    const mapResult = await newMap(id, map, connection);
+    console.log("[LOG] MAP INSERT SUCCESS: ", result ? true : false);
+
+    await connection.commit();
+    connection.release(); // 반환에 if 해줘야 할려나?
+    console.log("[LOG] SIGNUP SUCCESS: ", id);
+
+    return {
+        code: AUTH_RESULT.SUCCESS,
+      userId: result.id,
+        map: mapResult.result,
+    };
   } catch (e) {
-    // connection.rollback();
+    await connection.rollback();
+    connection.release();
 
     if (e.code == "ER_DUP_ENTRY") {
       return {
-        status: 409, //Conflict
-        message: "ID ALREADY EXISTS",
+          code: AUTH_RESULT.ALREADY_EXISTS,
       };
+    } else if (e.code("MAP IS NOT VALID")){
+        return {
+            code: AUTH_RESULT.NOT_VALID,
+        }
+    } else if (e.code("TRANSACTION_MAP_INSERT_FAILED")){
+        return {
+            code: AUTH_RESULT.FAILED
+        }
     } else {
       throw new Error("DB ERROR");
     }
-  } //finally {
-  //   db.endTransaction();
-  // }
-  return {
-    status: 201, // created
-    message: "SIGNUP SUCCESS",
-  };
+  }
 }
 
 // bi dong gi
 /**
  * 비밀번호 해싱
  * @param {*} password input pwd
- * @param {*} salt salt
  * @returns 해싱된 비밀번호
  */
 async function hashPassword(password) {
   const saltRound = 10;
-  const salt = bcrypt.genSalt(saltRound);
-  const hashedPassword = bcrypt.hash(password, salt);
+  const salt = await bcrypt.genSalt(saltRound);
+  const hashedPassword = await bcrypt.hash(password, salt);
+  console.log("[LOG] HASHED SUCCESS");
 
   return hashedPassword;
 }
 async function verifyPwd(hashedPwd, inputPwd) {
-  return bcrypt.compare(inputPwd, hashedPwd);
+    console.log(`[DEBUG] hashedPwd=${hashedPwd}, inputPwo=${inputPwd}`);
+  try {
+    return await bcrypt.compare(inputPwd, hashedPwd);
+  } catch (error) {
+    console.error("[LOG] Error : verifying password:", error);
+    return false;
+  }
 }
 
 /**
@@ -102,9 +137,10 @@ async function verifyPwd(hashedPwd, inputPwd) {
  * mapList: 서울 | 인천 | 경기 | 강원 | 충북 | 충남 | 대전 | 전북 | 전남 | 광주 | 경북 | 경남 | 대구 | 울산 | 부산
  * @param {*} user_id 유저 ID
  * @param {*} map 추가할 예측 가능 지역
+ * @param {*} connection DB connection
  * @returns 성공 201, 실패 500
  */
-async function newMap(user_id, map) {
+async function newMap(user_id, map, connection = null) {
   if (!user_id || !map) throw new Error("USER_ID OR MAP IS EMPTY");
 
   const mapList =
@@ -115,18 +151,30 @@ async function newMap(user_id, map) {
     throw new Error("MAP IS NOT VALID");
   }
 
-  const result = await db.executeQueryV(query, user_id, map);
+  let result;
+  if (connection) {
+    result = await db.executeQueryForTransaction(
+      connection,
+      query,
+      user_id,
+      map,
+    );
+  } else {
+    result = await db.executeQueryV(query, user_id, map);
+  }
 
+  if(connection && result.affectedRows == 0) {
+      throw new Error("TRANSACTION_MAP_INSERT_FAILED");
+  }
   if (result.affectedRows == 0) {
     return {
-      status: 500,
-      message: "Map Insert Failed",
+        code: AUTH_RESULT.FAILED,
     };
   }
 
   return {
-    status: 201,
-    message: "Map Insert Success",
+      code: AUTH_RESULT.SUCCESS,
+    result: result,
   };
 }
 
@@ -141,19 +189,17 @@ async function findByUserId(id) {
     const row = await db.executeQueryV(query, id);
     if (!row)
       return {
-        status: 404,
-        message: "User Not Found",
+        code: AUTH_RESULT.NOT_FOUND,
       };
     else
       return {
-        status: 200,
-        message: "User Found",
+        code: AUTH_RESULT.SUCCESS,
         data: row,
       };
   } catch (e) {
     console.log(e); // 일단 임시
     return {
-      status: 500,
+      status: 500, // 상태코드 그대로 보내는 건 일단 임시로 해둔 거
       message: "Server OR DB ERROR",
     };
   }
@@ -197,22 +243,24 @@ async function inventoryUpdate(id, value, type) {
     const result = await db.executeQueryV(query, value, id, type);
     if (result.affectedRows > 0) {
       return {
-        status: 204,
+        code: AUTH_RESULT.SUCCESS,
       };
     } else if (result.length === 0) {
+
       let query = `SELECT user_id FROM inventory WHERE user_id = ? AND item_name = ?`;
       let row = await db.executeQueryV(query, id, type);
+
       if (row.length === 0) {
         let query = `INSERT INTO inventory (user_id, item_name, quantity) VALUES (?, ?, ?)`;
         await db.executeQueryV(query, id, type, value);
         return {
-          status: 204,
+          code: AUTH_RESULT.SUCCESS,
         };
       }
+
     } else
       return {
-        status: 500,
-        message: "Update Inventory Failed",
+        code: AUTH_RESULT.FAILED,
       };
   } catch (e) {
     console.log(e);
@@ -232,7 +280,7 @@ async function getInventory(id) {
   const query = "SELECT * FROM inventory WHERE user_id = ?";
   try {
     return {
-      status: 204,
+      code: AUTH_RESULT.SUCCESS, 
       data: await db.executeQueryV(query, id),
     };
   } catch (e) {
@@ -243,3 +291,13 @@ async function getInventory(id) {
     };
   }
 }
+
+export default {
+  doLogin,
+  signup,
+  newMap,
+  findByUserId,
+  updateUser,
+  inventoryUpdate,
+  getInventory,
+};
