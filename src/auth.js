@@ -292,6 +292,25 @@ async function getInventory(id) {
   }
 }
 
+async function showRanking(type) {
+    let query = "";
+    if(type === "total") {
+        query = "SELECT id, name, point, current_streak, equipped_title, equipped_profile_image FROM user ORDER BY point DESC, current_streak DESC LIMIT 100";
+    } else if (type === "weekend") {
+        query = "SELECT * FROM weekly_stat ORDER BY earned_point DESC, success_count DESC LIMIT 100"; // 여기 나중에 칭호나 프사도 가능하게 해줘야 함.
+    } else return { code: AUTH_RESULT.NOT_VALID };
+
+    const rows = await db.executeQueryV(query);
+    const row = rows[0];
+
+    if(!row) return { code: AUTH_RESULT.FAILED }
+
+    return {
+        code: AUTH_RESULT.SUCCESS,
+        data: row
+    };
+}
+
 export default {
   doLogin,
   signup,
@@ -300,4 +319,5 @@ export default {
   updateUser,
   inventoryUpdate,
   getInventory,
+    showRanking,
 };

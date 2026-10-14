@@ -68,23 +68,28 @@ const server = http
 
     if (request.method === "GET") {
         const url = new URL(request.url, "http://localhost:3000");
-        const queryParams = url.searchParams;
+
         let requestUrl = request.url;
         if(requestUrl) {
             requestUrl = requestUrl.slice(0, requestUrl.indexOf("?"));
         }
+        const queryParams = url.searchParams;
 
         let body = "";
         request.on("data", (chunk) => {
             body += chunk;
-        })
+        });
 
         request.on("end", async () => {
             try {
                 request.body = body ? JSON.parse(body) : {};
 
                 if (requestUrl === "/rank") {
-                    return await rankApi.showRanking(queryParams.get("type"));
+                    if(!queryParams) {
+                        response.writeHead(400);
+                        response.end(JSON.stringify({message: "잘못된 요청"}));
+                    }
+                    return await rankApi.showRanking(request, response, queryParams.get("type"));
                 }
             } catch (e) {
                 console.log("[ERROR] " +e)
