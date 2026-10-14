@@ -71,7 +71,7 @@ const server = http
         const queryParams = url.searchParams;
         let requestUrl = request.url;
         if(requestUrl) {
-            requestUrl = requestUrl.slice(0, requestUrl.indexOf("?"));
+            requestUrl = url.pathname;
         }
 
         let body = "";
