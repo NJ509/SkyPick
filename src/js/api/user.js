@@ -57,26 +57,16 @@ async function signup(req, res) {
   const response = await auth.signup(id, password, name, map);
   const { code } = response;
   switch (code) {
-      case "FAILED": {
-          res.writeHead(400);
-          res.end(JSON.stringify({message: "회원가입 실패"}));
-      }
-      case "ALREADY_EXISTS": {
-          res.writeHead(409);
-          res.end(JSON.stringify({message: "이미 존재하는 ID입니다."}));
-      }
-      case "NOT_VALID": {
-          res.writeHead(400);
-          res.end(JSON.stringify({message: "선택한 지역이 없거나 잘못되었습니다."}));
-      }
-      case "SUCCESS": {
-          res.writeHead(201);
-          res.end(JSON.stringify({
-              message: "회원가입이 완료되었습니다.",
-              // userId: response.userId,
-              // selectedMap: response.map,
-          }));
-      }
+    case "FAILED":
+      return res.writeHead(400).end(JSON.stringify({ message: "회원가입 실패" }));
+    case "ALREADY_EXISTS":
+      return res.writeHead(409).end(JSON.stringify({ message: "이미 존재하는 ID입니다." }));
+    case "NOT_VALID":
+      return res.writeHead(400).end(JSON.stringify({ message: "선택한 지역이 없거나 잘못되었습니다." }));
+    case "SUCCESS":
+      return res.writeHead(201).end(JSON.stringify({ message: "회원가입이 완료되었습니다." }));
+    default:
+      return res.writeHead(500).end(JSON.stringify({ message: "회원가입 처리 실패" }));
   }
 }
 
