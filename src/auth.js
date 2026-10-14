@@ -93,14 +93,14 @@ async function signup(id, password, name, map) {
       return {
           code: AUTH_RESULT.ALREADY_EXISTS,
       };
-    } else if (e.code("MAP IS NOT VALID")){
+    } else if (e.message === "MAP IS NOT VALID") {
         return {
             code: AUTH_RESULT.NOT_VALID,
-        }
-    } else if (e.code("TRANSACTION_MAP_INSERT_FAILED")){
+        };
+    } else if (e.message === "TRANSACTION_MAP_INSERT_FAILED") {
         return {
-            code: AUTH_RESULT.FAILED
-        }
+            code: AUTH_RESULT.FAILED,
+        };
     } else {
       throw new Error("DB ERROR");
     }
