@@ -147,7 +147,7 @@ async function newMap(user_id, map, connection = null) {
     "서울 | 인천 | 경기 | 강원 | 충북 | 충남 | 대전 | 전북 | 전남 | 광주 | 경북 | 경남 | 대구 | 울산 | 부산";
   const query = "INSERT INTO map (user_id, map) VALUES (?, ?)";
 
-  if (!mapList.includes(map)) {
+  if (!mapList.split(" | ").includes(map)) {
     throw new Error("MAP IS NOT VALID");
   }
 
