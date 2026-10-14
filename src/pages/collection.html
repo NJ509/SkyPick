@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyPick - 도감</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .collection-container {
+            height: calc(100vh - 70px);
+            padding: 25px 30px;
+            overflow: hidden;
+        }
+
+        .collection-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .collection-header h1 {
+            margin: 0;
+            font-size: 40px;
+            font-weight: 800;
+        }
+
+        .collection-header p {
+            margin: 6px 0 0;
+            color: #2563eb;
+            font-size: 13px;
+        }
+
+        .collection-progress {
+            min-width: 130px;
+            padding: 10px 15px;
+            border: 1px solid #e9edf2;
+            border-radius: 10px;
+            background: #ffffff;
+            text-align: right;
+        }
+
+        .collection-progress span {
+            display: block;
+            margin-bottom: 3px;
+            color: #9299a2;
+            font-size: 11px;
+        }
+
+        .collection-progress strong {
+            font-size: 16px;
+        }
+
+        .collection-tabs {
+            display: flex;
+            gap: 7px;
+            margin-bottom: 18px;
+        }
+
+        .collection-tab {
+            height: 34px;
+            padding: 0 15px;
+            border: 1px solid #e1e6eb;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #737b84;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .collection-tab.active {
+            border-color: #20252b;
+            background: #20252b;
+            color: #ffffff;
+        }
+
+        .collection-section {
+            margin-bottom: 18px;
+        }
+
+        .collection-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 9px;
+        }
+
+        .collection-section-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .collection-section-header span {
+            color: #9299a2;
+            font-size: 11px;
+        }
+
+        .collection-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .collection-item {
+            position: relative;
+            min-width: 0;
+            padding: 13px;
+            border: 1px solid #e9edf2;
+            border-radius: 12px;
+            background: #ffffff;
+        }
+
+        .collection-image {
+            height: 70px;
+            margin-bottom: 9px;
+            border-radius: 9px;
+            background: #f5f7f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+        }
+
+        .collection-item h3 {
+            margin: 0 0 3px;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .collection-item p {
+            height: 15px;
+            margin: 0;
+            color: #9299a2;
+            font-size: 9px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .collection-state {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 7px;
+            border-radius: 5px;
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        .owned .collection-state {
+            background: #f0f4f8;
+            color: #59636e;
+        }
+
+        .locked .collection-image {
+            filter: grayscale(1);
+            opacity: 0.35;
+        }
+
+        .locked h3 {
+            color: #a2a8ae;
+        }
+
+        .locked .collection-state {
+            background: #f3f3f3;
+            color: #a2a8ae;
+        }
+
+        @media (max-width: 991px) {
+            .collection-container {
+                height: auto;
+                min-height: calc(100vh - 70px);
+                overflow: visible;
+            }
+
+            .collection-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .collection-container {
+                padding: 20px 15px;
+            }
+
+            .collection-header {
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .collection-progress {
+                min-width: 100px;
+            }
+
+            .collection-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg bg-white border-bottom">
+        <div class="container">
+
+            <a class="navbar-brand fw-bold" href="./home.html">SkyPick</a>
+
+            <div class="navbar-nav">
+                <a class="nav-link" href="./home.html">예측</a>
+                <a class="nav-link" href="./prediction.html">예측 리스트</a>
+                <a class="nav-link" href="./shop.html">상점</a>
+                <a class="nav-link active" href="./collection.html">도감</a>
+                <a class="nav-link" href="./ranking.html">랭킹</a>
+            </div>
+
+            <div class="user-info">
+                <span class="point">1,250 P</span>
+                <button class="profile-btn">프로필</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container collection-container">
+        <div class="collection-header">
+            <div>
+                <h1>도감</h1>
+                <p>획득한 아이템을 확인하고 나만의 컬렉션을 완성해보세요.</p>
+            </div>
+            <div class="collection-progress">
+                <span>수집 현황</span>
+                <strong id="collection-count">3 / 12</strong>
+            </div>
+        </div>
+
+        <div class="collection-tabs">
+            <button class="collection-tab active">전체</button>
+            <button class="collection-tab">칭호</button>
+            <button class="collection-tab">프로필</button>
+            <button class="collection-tab">테마</button>
+        </div>
+
+        <section class="collection-section">
+            <div class="collection-section-header">
+                <h2>칭호</h2>
+                <span>1 / 4</span>
+            </div>
+
+            <div class="collection-grid">
+
+                <div class="collection-item owned">
+                    <div class="collection-image">이미지</div>
+                    <h3>제우스</h3>
+                    <p>부가 설명</p>
+                    <span class="collection-state">보유</span>
+                </div>
+
+                <div class="collection-item locked">
+                    <div class="collection-image">이미지</div>
+                    <h3>인간 기상청</h3>
+                    <p>부가 설명</p>
+                    <span class="collection-state">미보유</span>
+                </div>
+
+                <div class="collection-item locked">
+                    <div class="collection-image">이미지</div>
+                    <h3>꿀벌</h3>
+                    <p>부가 설명</p>
+                    <span class="collection-state">미보유</span>
+                </div>
+
+                <div class="collection-item locked">
+                    <div class="collection-image">이미지</div>
+                    <h3>예감 적중</h3>
+                    <p>부가 설명</p>
+                    <span class="collection-state">미보유</span>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="collection-section">
+            <div class="collection-section-header">
+                <h2>프로필</h2>
+                <span>2 / 4</span>
+            </div>
+
+            <div class="collection-grid">
+
+                <div class="collection-item owned">
+                    <div class="collection-image">이미지</div>
+                    <h3>고양이</h3>
+                    <p>고양이 프로필</p>
+                    <span class="collection-state">보유</span>
+                </div>
+
+                <div class="collection-item owned">
+                    <div class="collection-image">이미지</div>
+                    <h3>곰</h3>
+                    <p>곰 프로필</p>
+                    <span class="collection-state">보유</span>
+                </div>
+
+                <div class="collection-item locked">
+                    <div class="collection-image">이미지</div>
+                    <h3>여우</h3>
+                    <p>여우 프로필</p>
+                    <span class="collection-state">미보유</span>
+                </div>
+
+                <div class="collection-item locked">
+                    <div class="collection-image">이미지</div>
+                    <h3>토끼</h3>
+                    <p>토끼 프로필</p>
+                    <span class="collection-state">미보유</span>
+                </div>
+
+            </div>
+        </section>
+    </main>
+</body>
+</html>

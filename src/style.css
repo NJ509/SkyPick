@@ -1,1 +1,63 @@
-/*전역 스타일 CSS*/
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    color: #202938;
+    background-color: #f6f8fc;
+    font-family: Arial, "Noto Sans KR", sans-serif;
+}
+
+/* =========================   Navbar   ========================= */
+
+.navbar {
+    height: 72px;
+}
+
+.navbar-brand {
+    color: #202938;
+    font-size: 24px;
+}
+
+.navbar-brand:hover {
+    color: #2563eb;
+}
+
+.navbar-nav {
+    display: flex;
+    gap: 24px;
+}
+
+.nav-link {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    color: #2563eb;
+}
+
+.nav-link.active {
+    color: #2563eb;
+    font-weight: 700;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.point {
+    font-weight: 700;
+}
+
+.profile-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    background-color: #eef2ff;
+    color: #2563eb;
+    font-weight: 600;
+}
