@@ -67,6 +67,7 @@
             color: #2563eb;
         }
 
+
         .map {
             width: 100%;
             height: 440px;
@@ -75,8 +76,14 @@
             background-color: #eef2f7;
         }
 
+        #map {
+            width: 100%;
+            height: 440px;
+        }
+
         .map-placeholder {
-            height: 100%;
+            width: 100%;
+            height: 400px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -402,7 +409,7 @@
                             <div class="map-header">
                                 <div>
                                     <span>예측 지역</span>
-                                    <h2>서울</h2>
+                                    <h2 id="mapRegion">서울</h2>
                                 </div>
                                 <button class="region-btn">지역 선택</button>
                             </div>
@@ -410,10 +417,9 @@
 
                             <!-- 나중에 지도 API  -->
                             <div class="map">
-                                <div class="map-placeholder">
-                                    <p>지도 API</p>
-                                </div>
+                                <div id="map"></div>
                             </div>
+                            <script type="module" src="./mapSelect.js"></script>
                         </div>
 
 
@@ -421,42 +427,33 @@
 
                         <div class="weather-card">
                             <div class="weather-header">
-                                <div>
-                                    <span class="weather-label">현재 날씨</span>
-                                    <h2>서울</h2>
-                                </div>
+    <div>
+        <span class="weather-label">날씨 예보</span>
+        <h2 id="weatherRegion">서울</h2>
+    </div>
+    <span class="weather-date" id="weatherDate">조회 중...</span>
+</div>
 
-                                <span class="weather-date">2026.09.09</span>
-                            </div>
+<div class="weather-main">
+    <div class="weather-icon" id="weatherIcon">🌤️</div>
+    <div class="temperature" id="temperature">--°</div>
+    <div class="weather-status" id="weatherStatus">조회 중...</div>
+</div>
 
-
-                            <!-- 날씨 메인 -->
-
-                            <div class="weather-main">
-                                <div class="weather-icon">☀️</div>
-                                <div class="temperature">24°</div>
-                                <div class="weather-status">맑음</div>
-                            </div>
-
-
-                            <!-- 날씨 상세 정보 -->
-
-                            <div class="weather-detail">
-                                <div>
-                                    <span>강수확률</span>
-                                    <strong>20%</strong>
-                                </div>
-
-                                <div>
-                                    <span>습도</span>
-                                    <strong>55%</strong>
-                                </div>
-
-                                <div>
-                                    <span>강수량</span>
-                                    <strong>0mm</strong>
-                                </div>
-                            </div>
+<div class="weather-detail">
+    <div>
+        <span>강수확률</span>
+        <strong id="weatherPop">--%</strong>
+    </div>
+    <div>
+        <span>습도</span>
+        <strong id="weatherHumidity">--%</strong>
+    </div>
+    <div>
+        <span>강수량</span>
+        <strong id="weatherRain">--</strong>
+    </div>
+</div>
                         </div>
                     </div>
 
@@ -488,8 +485,17 @@
                                     <option>인천</option>
                                     <option>경기</option>
                                     <option>강원</option>
-                                    <option>충청</option>
+                                    <option>충북</option>
+                                    <option>충남</option>
                                     <option>대전</option>
+                                    <option>전북</option>
+                                    <option>전남</option>
+                                    <option>광주</option>
+                                    <option>경북</option>
+                                    <option>경남</option>
+                                    <option>대구</option>
+                                    <option>울산</option>
+                                    <option>부산</option>
                                 </select>
                             </div>
 

@@ -2,6 +2,7 @@ import http from "http";
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 import { getWeather } from "./weather.js";
+import { convertToGrid } from "./weatherGrid.js";
 
 dotenv.config();
 
@@ -68,9 +69,22 @@ const server = http
           console.error(error);
           response.writeHead(500);
         }
-      }
-      else {
-        response.writeHead(404);
+      }else if (request.url.startsWith("/api/grid")) {
+        try {
+          const url = new URL(request.url, "http://localhost:3000");
+
+          const lat = url.searchParams.get("lat");
+          const lon = url.searchParams.get("lon");
+
+          const result = await convertToGrid(lat, lon);
+
+          response.writeHead(200);
+          response.end(result);
+
+        } catch (error) {
+          console.error(error);
+          response.writeHead(500);
+        }
       }
     } else if (request.method === "POST") {
     } else if (request.method === "PUT") {
