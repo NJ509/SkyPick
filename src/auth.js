@@ -10,7 +10,7 @@ import {AUTH_RESULT} from "./js/enums/authResult.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const filePath = path.resolve(
     __dirname,
-    "../../assets/data/shopManager.json"
+    "./assets/data/shopManager.json"
 );
 
 /**
@@ -304,14 +304,12 @@ async function getInventory(id) {
 }
 
 // SHOP ---
-const shopList = await loadList();
-
 async function getShopList() {
     const data = await fs.readFile(filePath, "utf8");
     const result = JSON.parse(data);
 
     console.log("[LOG] shopManager.json Loaded");
-    return result;
+    return JSON.stringify(result);
 }
 // ---
 export default {
