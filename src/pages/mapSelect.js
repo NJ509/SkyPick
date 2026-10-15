@@ -393,3 +393,36 @@ async function loadWeather(station) {
 }
 
 document.head.appendChild(script);
+
+
+//예측 시간 
+const predictionTime = document.getElementById("prediction-time");
+
+function setPredictionTime() {
+    const now = new Date();
+
+    // 현재 시각 기준 2시간 뒤
+    const minTime = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+
+    // 현재 시각 기준 48시간 뒤
+    const maxTime = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+    // datetime-local에 맞는 형식으로 변환
+    function formatDateTime(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hour = String(date.getHours()).padStart(2, "0");
+        const minute = String(date.getMinutes()).padStart(2, "0");
+
+        return `${year}-${month}-${day}T${hour}:${minute}`;
+    }
+
+    predictionTime.min = formatDateTime(minTime);
+    predictionTime.max = formatDateTime(maxTime);
+
+    // 기본값은 2시간 뒤
+    predictionTime.value = formatDateTime(minTime);
+}
+
+setPredictionTime();

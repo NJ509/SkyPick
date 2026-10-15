@@ -363,6 +363,7 @@
     </style>
 </head>
 
+<script type="module" src="./prediction.js"></script>
 <body>
 
     <!-- ==================== Navbar ==================== -->
@@ -427,33 +428,33 @@
 
                         <div class="weather-card">
                             <div class="weather-header">
-    <div>
-        <span class="weather-label">날씨 예보</span>
-        <h2 id="weatherRegion">서울</h2>
-    </div>
-    <span class="weather-date" id="weatherDate">조회 중...</span>
-</div>
+                                <div>
+                                    <span class="weather-label">날씨 예보</span>
+                                    <h2 id="weatherRegion">서울</h2>
+                                </div>
+                                <span class="weather-date" id="weatherDate">조회 중...</span>
+                            </div>
 
-<div class="weather-main">
-    <div class="weather-icon" id="weatherIcon">🌤️</div>
-    <div class="temperature" id="temperature">--°</div>
-    <div class="weather-status" id="weatherStatus">조회 중...</div>
-</div>
+                            <div class="weather-main">
+                                <div class="weather-icon" id="weatherIcon">🌤️</div>
+                                <div class="temperature" id="temperature">--°</div>
+                                <div class="weather-status" id="weatherStatus">조회 중...</div>
+                            </div>
 
-<div class="weather-detail">
-    <div>
-        <span>강수확률</span>
-        <strong id="weatherPop">--%</strong>
-    </div>
-    <div>
-        <span>습도</span>
-        <strong id="weatherHumidity">--%</strong>
-    </div>
-    <div>
-        <span>강수량</span>
-        <strong id="weatherRain">--</strong>
-    </div>
-</div>
+                            <div class="weather-detail">
+                                <div>
+                                    <span>강수확률</span>
+                                    <strong id="weatherPop">--%</strong>
+                                </div>
+                                <div>
+                                    <span>습도</span>
+                                    <strong id="weatherHumidity">--%</strong>
+                                </div>
+                                <div>
+                                    <span>강수량</span>
+                                    <strong id="weatherRain">--</strong>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -512,11 +513,11 @@
                             <!-- 예측 대상 -->
                             <div class="form-group">
                                 <label>예측 대상</label>
-                                <div class="prediction-types">
-                                    <button type="button" class="prediction-type active">날씨</button>
-                                    <button type="button" class="prediction-type">기온</button>
-                                    <button type="button" class="prediction-type">습도</button>
-                                    <button type="button" class="prediction-type">강수량</button>
+                                 <div class="prediction-types">
+                                    <button type="button" class="prediction-type active" data-target="weather">날씨</button>
+                                    <button type="button" class="prediction-type" data-target="temperature">기온</button>
+                                    <button type="button" class="prediction-type" data-target="humidity">습도</button>
+                                    <button type="button" class="prediction-type" data-target="rain">강수량</button>
                                 </div>
                             </div>
 
@@ -526,19 +527,15 @@
 
                             <div class="form-group">
                                 <label for="prediction-value">내 예측</label>
-
-                                <select
-                                    id="prediction-value"
-                                    class="form-select"
-                                >
-                                    <option>맑음</option>
-                                    <option>비</option>
-                                    <option>흐림</option>
-                                    <option>눈</option>
-                                    <option>우박</option>
-
-                                </select>
-
+                                <div id="prediction-value-container">
+                                    <select id="prediction-value" class="form-select">
+                                        <option value="맑음">맑음</option>
+                                        <option value="비">비</option>
+                                        <option value="흐림">흐림</option>
+                                        <option value="눈">눈</option>
+                                        <option value="우박">우박</option>
+                                    </select>
+                                </div>
                             </div>
 
 
@@ -549,7 +546,7 @@
 
                                 <div class="betting-header">
                                     <label for="betting">배팅 포인트</label>
-                                    <strong>0 P</strong>
+                                    <strong><span id="bettingValue">0</span> P</strong>
                                 </div>
 
 
@@ -559,6 +556,7 @@
                                     class="form-range"
                                     min="0"
                                     max="1000"
+                                    step="10"
                                     value="0"
                                 >
 
@@ -577,9 +575,8 @@
 
                                 <div>
                                     <span>예측 성공 시</span>
-                                    <strong>+100 P</strong>
+                                    <strong id="successReward">+100 P</strong>
                                 </div>
-
                                 <p>포인트를 걸지 않은 예측의 기본 보상입니다.</p>
 
                             </div>
