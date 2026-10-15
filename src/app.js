@@ -88,7 +88,7 @@ const server = http
                     return await rankApi.showRanking(queryParams.get("type"));
                 }
                 if(requestUrl === "/shop") {
-                    return await shopApi.showShopList();
+                    return await shopApi.showShopList(response);
                 }
             } catch (e) {
                 console.log("[ERROR] " +e)
