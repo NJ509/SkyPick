@@ -1,3 +1,4 @@
+CREATE DATABASE skypick;
 CREATE TABLE user (
     id VARCHAR(20) PRIMARY KEY,
     password VARCHAR(60) NOT NULL,
@@ -11,21 +12,21 @@ CREATE TABLE user (
 );
 
 CREATE TABLE item (
-    name VARCHAR(30) PRIMARY KEY,
-    price INTEGER NOT NULL,
-    value VARCHAR(50) NOT NULL, -- 아이템 값 (타이틀이면 title name, 프로필 이미지면 image_loc, 방지권이면 방지권 종류)
-
-    type VARCHAR(10) NOT NULL -- 아이템 종류 (title, profile_image)
+    id    INTEGER AUTO_INCREMENT PRIMARY KEY,
+    name  VARCHAR(30) NOT NULL,
+    price INTEGER     NOT NULL,
+    value VARCHAR(50) NOT NULL,
+    type  ENUM('title', 'profile_image', 'usage_item') NOT NULL
 );
 
 CREATE TABLE inventory (
-    user_id VARCHAR(20) NOT NULL,
-    item_name VARCHAR(30) NOT NULL,
+    user_id  VARCHAR(20) NOT NULL,
+    item_id  INTEGER     NOT NULL,
     quantity INT DEFAULT 0,
-    
-    PRIMARY KEY(user_id, item_name),
-    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
-    FOREIGN KEY (item_name) REFERENCES item(name) ON DELETE CASCADE
+
+    PRIMARY KEY (user_id, item_id),
+    FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES item (id) ON DELETE CASCADE
 );
 
 CREATE TABLE map (

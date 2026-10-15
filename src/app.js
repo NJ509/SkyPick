@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import http from "http";
 import userApi from "./js/api/user.js";
 import rankApi from "./js/api/rank.js";
+import shopApi from "./js/api/shop.js";
 const result = dotenv.config({path: '../.env'});
 
 console.log("[LOG] env loaded: " +result);
@@ -85,6 +86,9 @@ const server = http
 
                 if (requestUrl === "/rank") {
                     return await rankApi.showRanking(queryParams.get("type"));
+                }
+                if(requestUrl === "/shop") {
+                    return await shopApi.showShopList();
                 }
             } catch (e) {
                 console.log("[ERROR] " +e)
