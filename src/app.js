@@ -71,7 +71,7 @@ const server = http
 
         let requestUrl = request.url;
         if(requestUrl) {
-            requestUrl = requestUrl.slice(0, requestUrl.indexOf("?"));
+            requestUrl = url.pathname;
         }
         const queryParams = url.searchParams;
 
@@ -85,12 +85,10 @@ const server = http
                 request.body = body ? JSON.parse(body) : {};
 
                 if (requestUrl === "/rank") {
-                    if(!queryParams) {
-                        response.writeHead(400);
-                        response.end(JSON.stringify({message: "잘못된 요청"}));
-                    }
                     return await rankApi.showRanking(request, response, queryParams.get("type"));
                 }
+
+                return;
             } catch (e) {
                 console.log("[ERROR] " +e)
                 response.destroy();
