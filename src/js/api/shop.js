@@ -1,4 +1,6 @@
 import auth from "../../auth.js";
+import sessions from "../utils/session.js";
+import {AUTH_RESULT} from "../enums/authResult.js";
 
 async function showShopList(res) {
     try {
@@ -19,4 +21,39 @@ async function showShopList(res) {
     }
 }
 
-export default { showShopList }
+async function buyItem(req, res, queryParams) {
+    const session = sessions.getSession(req);
+
+    if (!session) {
+        res.writeHead(401, {
+            "Content-Type": "application/json; charset=utf-8",
+        });
+
+        return res.end(JSON.stringify({
+            message: "로그인이 필요합니다.",
+        }));
+    }
+
+    const userId = session.userId;
+    const { itemId } = req.body;
+
+    if(!userId, !itemId) {
+        return res.writeHead(400).end(JSON.stringify({message: "잘못된 요청"}));
+    }
+
+    const result = await auth.buyItem(userId, itemId);
+
+    if(result.code === AUTH_RESULT.SUCCESS) {
+        return res.writeHead(200).end(JSON.stringify({
+            message: "구매 성공",
+            data: result
+        }));
+    } else return res.writeHead(400).end(JSON.stringify({
+        message: "구매 실패",
+        code: result.code,
+        data: result.data,
+    }))
+
+}
+
+export default { showShopList, buyItem }

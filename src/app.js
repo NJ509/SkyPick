@@ -96,33 +96,43 @@ const server = http
             }
         })
     } else if (request.method === "POST") {
-            let body = "";
+        const url = new URL(request.url, "http://localhost:3000");
+        const queryParams = url.searchParams;
+        let requestUrl = request.url;
+        if (requestUrl) {
+            requestUrl = url.pathname;
+        }
 
-            request.on("data", (chunk) => {
-                body += chunk;
-            });
+        let body = "";
 
-            request.on("end", async () => {
-                try {
+        request.on("data", (chunk) => {
+            body += chunk;
+        });
+
+        request.on("end", async () => {
+            try {
                 request.body = body ? JSON.parse(body) : {};
 
-                if (request.url === "/login") {
+                if (requestUrl === "/login") {
                     return await userApi.login(request, response);
                 }
-                if (request.url === "/signup") {
+                if (requestUrl === "/signup") {
                     return await userApi.signup(request, response);
+                }
+                if (requestUrl === "/shop") {
+                    return await shopApi.buyItem(request, response, queryParams);
                 }
 
 
                 response.writeHead(404);
                 response.end(JSON.stringify({error: "Not Found"}));
-                } catch (e) {
-                    console.log("[ERROR] " + e);
-                    response.destroy();
-                }
-            });
+            } catch (e) {
+                console.log("[ERROR] " + e);
+                response.destroy();
+            }
+        });
 
-            return;
+        return;
     } else if (request.method === "PUT") {
     } else if (request.method === "DELETE") {
     } else {
