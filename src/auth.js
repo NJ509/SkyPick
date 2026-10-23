@@ -23,7 +23,6 @@ async function doLogin(id, password) {
   if (!id || !password) throw new Error("ID OR PWD IS EMPTY");
 
   try {
-    console.log(`id=${id}, pwd=${password}`)
     const query = "SELECT id, password FROM user WHERE id = ?";
     const rows = await db.executeQueryV(query, id);
     const row = rows[0];
@@ -133,7 +132,6 @@ async function hashPassword(password) {
   return hashedPassword;
 }
 async function verifyPwd(hashedPwd, inputPwd) {
-    console.log(`[DEBUG] hashedPwd=${hashedPwd}, inputPwo=${inputPwd}`);
   try {
     return await bcrypt.compare(inputPwd, hashedPwd);
   } catch (error) {
