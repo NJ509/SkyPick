@@ -120,7 +120,7 @@ const server = http
                     return await userApi.signup(request, response);
                 }
                 if (requestUrl === "/shop") {
-                    return await shopApi.buyItem(request, response, queryParams);
+                    return await shopApi.buyItem(request, response);
                 }
 
 
