@@ -1,4 +1,6 @@
 CREATE DATABASE skypick;
+USE skypick;
+
 CREATE TABLE user (
     id VARCHAR(20) PRIMARY KEY,
     password VARCHAR(60) NOT NULL,

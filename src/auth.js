@@ -310,7 +310,7 @@ async function getShopList() {
     const result = JSON.parse(data);
 
     console.log("[LOG] shopManager.json Loaded");
-    return JSON.stringify(result);
+    return result;
 }
 
 async function buyItem(userId, itemId) {
@@ -339,7 +339,7 @@ async function buyItem(userId, itemId) {
             throw new Error(`Invalid point balance for user ${userId}: ${user.point}`);
         }
 
-        const items = JSON.parse(await getShopList());
+        const items = await getShopList();
         const item = items.find((value) => value.id === Number(itemId));
         if (!item) {
             await connection.rollback();
