@@ -21,7 +21,7 @@ async function showShopList(res) {
     }
 }
 
-async function buyItem(req, res, queryParams) {
+async function buyItem(req, res) {
     const session = sessions.getSession(req);
 
     if (!session) {
@@ -37,7 +37,7 @@ async function buyItem(req, res, queryParams) {
     const userId = session.userId;
     const { itemId } = req.body;
 
-    if(!userId, !itemId) {
+    if (!userId || !itemId) {
         return res.writeHead(400).end(JSON.stringify({message: "잘못된 요청"}));
     }
 

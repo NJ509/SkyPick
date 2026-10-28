@@ -85,7 +85,7 @@ const server = http
                 request.body = body ? JSON.parse(body) : {};
 
                 if (requestUrl === "/rank") {
-                    return await rankApi.showRanking(queryParams.get("type"));
+                    return await rankApi.showRanking(request, response, queryParams.get("type"));
                 }
                 if(requestUrl === "/shop") {
                     return await shopApi.showShopList(response);
@@ -120,7 +120,7 @@ const server = http
                     return await userApi.signup(request, response);
                 }
                 if (requestUrl === "/shop") {
-                    return await shopApi.buyItem(request, response, queryParams);
+                    return await shopApi.buyItem(request, response);
                 }
 
 
