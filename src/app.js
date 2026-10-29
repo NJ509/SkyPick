@@ -5,7 +5,13 @@ import http from "http";
 import userApi from "./js/api/user.js";
 import rankApi from "./js/api/rank.js";
 import shopApi from "./js/api/shop.js";
-const result = dotenv.config({path: '../.env'});
+const result = dotenv.config({path: new URL('../.env', import.meta.url)});
+const allowedOrigins = new Set(
+  (process.env.CORS_ALLOWED_ORIGINS ?? "http://localhost:5173,http://127.0.0.1:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+);
 
 console.log("[LOG] env loaded: " +result);
 class Database {
@@ -64,8 +70,28 @@ export { db };
 
 const server = http
   .createServer((request, response) => {
-    response.setHeader("Access-Control-Allow-Origin", "*");
     response.setHeader("Content-Type", "application/json;charset=UTF-8");
+    response.setHeader("Vary", "Origin");
+
+    const origin = request.headers.origin;
+    if (origin && !allowedOrigins.has(origin)) {
+      response.writeHead(403);
+      response.end(JSON.stringify({ error: "허용되지 않은 origin입니다." }));
+      return;
+    }
+
+    if (origin) {
+      response.setHeader("Access-Control-Allow-Origin", origin);
+      response.setHeader("Access-Control-Allow-Credentials", "true");
+    }
+
+    if (request.method === "OPTIONS") {
+      response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+      response.writeHead(204);
+      response.end();
+      return;
+    }
 
     if (request.method === "GET") {
         const url = new URL(request.url, "http://localhost:3000");
