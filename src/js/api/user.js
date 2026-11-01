@@ -1,6 +1,7 @@
 /* @ts-check */
 
 import auth from "../../auth.js";
+import session from "../utils/session.js";
 
 /**
  * 유저 로그인 api
@@ -31,7 +32,11 @@ async function login(req, res) {
           break;
       }
       case "SUCCESS": {
-          res.writeHead(200);
+          const sessionId = session.createSession(response.userId);
+
+          res.writeHead(200, {
+            "Set-Cookie": `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=86400; SameSite=Lax`,
+          });
           res.end(JSON.stringify({
               message: "로그인 성공",
               userId: response.userId,
