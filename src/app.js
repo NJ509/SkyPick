@@ -1,11 +1,11 @@
-﻿// ?쒕쾭 ?ㅽ뻾 ?뚯씪
+﻿// 서버 실행 파일
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 import http from "http";
 import userApi from "./js/api/user.js";
 import rankApi from "./js/api/rank.js";
 import weatherApi from "./js/api/weather.js";
-const result = dotenv.config({path: '../.env'});
+const result = dotenv.config();
 
 console.log("[LOG] env loaded: " +result);
 class Database {
@@ -25,21 +25,21 @@ class Database {
     return this.db.getConnection();
   }
 
-  // ?먮윭???쒕퉬?ㅼ뿉??
-  /** ?ъ떎 ?섎뒗 ?꾩슂 ?놁쓣 寃?媛숆릿 ?쒕뜲 ?뱀떆 紐⑤Ⅴ?덇퉴
-   * DB 荑쇰━ ?ㅽ뻾
-   * @param {*} query  SQL 荑쇰━臾?
-   * @param  {...params} params 荑쇰━ '?' ???ㅼ뼱媛?媛?
-   * @returns {Promise} 荑쇰━ 寃곌낵 (媛? 硫뷀??곗씠??
+  //  에러는 서비스에서
+  /**  사실 얘는 필요 없을 것 같긴 한데 혹시 모르니까
+   * DB 쿼리 실행
+   * @param {*} query  SQL 쿼리문
+   * @param  {...params}  params 쿼리 '?' 에 들어갈 값
+   * @returns {Promise} 쿼리 결과 (값, 메타데이터)
    */
   async executeQueryVM(query, ...params) {
     return await this.db.execute(query, params);
   }
   /**
-   * DB 荑쇰━ ?ㅽ뻾
-   * @param {*} query  SQL 荑쇰━臾?
-   * @param  {...params} params 荑쇰━ '?' ???ㅼ뼱媛?媛?
-   * @returns {Promise} 荑쇰━ 寃곌낵 (媛?
+   * DB 쿼리 실행
+   * @param {*} query  SQL 쿼리문
+   * @param  {...params} params 쿼리- '?' 에 들어갈 값
+   * @returns {Promise} 쿼리 결과 (값, 메타데이터)
    */
   async executeQueryV(query, ...params) {
     const [row] = await this.db.execute(query, params);
@@ -47,10 +47,10 @@ class Database {
   }
 
   /**
-   * ?몃옖??뀡?먯꽌 DB 荑쇰━ ?ㅽ뻾
-   * @param {*} connection ?몃옖??뀡 ?곌껐 媛앹껜
-   * @param {*} query 荑쇰━臾?
-   * @param  {...any} params ?뚮씪誘명꽣
+   * 트랜잭션에서 DB 쿼리 실행
+   * @param {*} connection 트랜잭션 연결 객체
+   * @param {*} query 쿼리문
+   * @param  {...any} params 파라미터
    * @returns 寃곌낵媛?
    */
   async executeQueryForTransaction(connection, query, ...params) {
@@ -68,71 +68,70 @@ const server = http
     response.setHeader("Content-Type", "application/json;charset=UTF-8");
 
     if (request.method === "GET") {
-        const url = new URL(request.url, "http://localhost:3000");
+      const url = new URL(request.url, "http://localhost:3000");
 
-        let requestUrl = request.url;
-        if(requestUrl) {
-            requestUrl = url.pathname;
+      let requestUrl = request.url;
+      if(requestUrl) {
+          requestUrl = url.pathname;
+      }
+      const queryParams = url.searchParams;
+
+      let body = "";
+      request.on("data", (chunk) => {
+          body += chunk;
+      });
+
+      request.on("end", async () => {
+        try {
+          request.body = body ? JSON.parse(body) : {};
+
+          if (requestUrl === "/rank") {
+              return await rankApi.showRanking(request, response, queryParams.get("type"));
+          }if (requestUrl === "/api/weather") {
+              return await weatherApi.showWeather(request, response, queryParams);
+          }
+          if (requestUrl === "/api/grid") {
+              return await weatherApi.showGrid(request, response, queryParams);
+          }
+
+          return;
+        } catch (e) {
+          console.log("[ERROR] " +e)
+          response.destroy();
         }
-        const queryParams = url.searchParams;
+      })
+    } 
+    else if (request.method === "POST") {
+      let body = "";
 
-        let body = "";
-        request.on("data", (chunk) => {
-            body += chunk;
-        });
+      request.on("data", (chunk) => {
+          body += chunk;
+      });
 
-        request.on("end", async () => {
-            try {
-                request.body = body ? JSON.parse(body) : {};
+      request.on("end", async () => {
+          try {
+            request.body = body ? JSON.parse(body) : {};
 
-                if (requestUrl === "/rank") {
-                    return await rankApi.showRanking(request, response, queryParams.get("type"));
-                }if (requestUrl === "/api/weather") {
-                    return await weatherApi.showWeather(request, response, queryParams);
-                }
-                if (requestUrl === "/api/grid") {
-                    return await weatherApi.showGrid(request, response, queryParams);
-                }
-
-                return;
-            } catch (e) {
-                console.log("[ERROR] " +e)
-                response.destroy();
+            if (request.url === "/login") {
+              return await userApi.login(request, response);
             }
-        })
-    } else if (request.method === "POST") {
-            let body = "";
+            if (request.url === "/signup") {
+              return await userApi.signup(request, response);
+            }
+            response.writeHead(404);
+            response.end(JSON.stringify({error: "Not Found"}));
+          } catch (e) {
+            console.log("[ERROR] " + e);
+            response.destroy();
+          }
+      });
 
-            request.on("data", (chunk) => {
-                body += chunk;
-            });
-
-            request.on("end", async () => {
-                try {
-                request.body = body ? JSON.parse(body) : {};
-
-                if (request.url === "/login") {
-                    return await userApi.login(request, response);
-                }
-                if (request.url === "/signup") {
-                    return await userApi.signup(request, response);
-                }
-
-
-                response.writeHead(404);
-                response.end(JSON.stringify({error: "Not Found"}));
-                } catch (e) {
-                    console.log("[ERROR] " + e);
-                    response.destroy();
-                }
-            });
-
-            return;
+      return;
     } else if (request.method === "PUT") {
     } else if (request.method === "DELETE") {
     } else {
       response.writeHead(405);
-      response.end(JSON.stringify({ error: "吏?먮릺吏 ?딅뒗 硫붿꽌???붿껌 ?뺤떇" }));
+      response.end(JSON.stringify({ error: "지원되지 않는 메서드 요청 형식" }));
     }
   })
   .listen(3000, () => {
