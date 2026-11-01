@@ -117,6 +117,9 @@ const server = http
                 if(requestUrl === "/shop") {
                     return await shopApi.showShopList(response);
                 }
+                if (requestUrl === "/api/weather") {
+                    return await weatherApi.showWeather(request, response, queryParams);
+                }
             } catch (e) {
                 console.log("[ERROR] " +e)
                 response.destroy();

@@ -5,21 +5,21 @@ script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_MAP_KEY}&auto
 
 // 지역별 대표 역
 const stations = [
-    { name: "서울역", region: "서울", lat: 37.55406888733184, lon: 126.97070335253385 },
-    { name: "인천역", region: "인천", lat: 37.476166712082836, lon: 126.61682219568799 },
-    { name: "수원역", region: "경기", lat: 37.2657903079673, lon: 127.000094700292 },
-    { name: "춘천역", region: "강원", lat: 37.884512737384, lon: 127.716698593345 },
-    { name: "청주역", region: "충북", lat: 36.6471521939553, lon: 127.392335249207 },
-    { name: "천안역", region: "충남", lat: 36.80907913057255, lon: 127.14677293470254 },
-    { name: "대전역", region: "대전", lat: 36.33229415139486, lon: 127.4346445159045 },
-    { name: "전주역", region: "전북", lat: 35.8498531247183, lon: 127.16180338402 },
-    { name: "목포역", region: "전남", lat: 34.79113445784631, lon: 126.38657548066539 },
-    { name: "광주송정역", region: "광주", lat: 35.13766750683345, lon: 126.79080503506053 },
-    { name: "포항역", region: "경북", lat: 36.07160517955013, lon: 129.34192815800867 },
-    { name: "진주역", region: "경남", lat: 35.150713268353236, lon: 128.1179167693619 },
-    { name: "동대구역", region: "대구", lat: 35.8793239931795, lon: 128.628393775388 },
-    { name: "울산역", region: "울산", lat: 35.551427139940806, lon: 129.1385985245419 },
-    { name: "부산역", region: "부산", lat: 35.11520340622514, lon: 129.04154985192403 }
+    { name: "서울역", region: "서울", lat: 37.55406888733184, lon: 126.97070335253385, nx: 61, ny: 127 },
+    { name: "인천역", region: "인천", lat: 37.476166712082836, lon: 126.61682219568799, nx: 55, ny: 126 },
+    { name: "수원역", region: "경기", lat: 37.2657903079673, lon: 127.000094700292, nx: 61, ny: 121 },
+    { name: "춘천역", region: "강원", lat: 37.884512737384, lon: 127.716698593345, nx: 73, ny: 135 },
+    { name: "청주역", region: "충북", lat: 36.6471521939553, lon: 127.392335249207, nx: 68, ny: 108 },
+    { name: "천안역", region: "충남", lat: 36.80907913057255, lon: 127.14677293470254, nx: 64, ny: 111 },
+    { name: "대전역", region: "대전", lat: 36.33229415139486, lon: 127.4346445159045, nx: 69, ny: 101 },
+    { name: "전주역", region: "전북", lat: 35.8498531247183, lon: 127.16180338402, nx: 65, ny: 90 },
+    { name: "목포역", region: "전남", lat: 34.79113445784631, lon: 126.38657548066539, nx: 51, ny: 67 },
+    { name: "광주송정역", region: "광주", lat: 35.13766750683345, lon: 126.79080503506053, nx: 58, ny: 75 },
+    { name: "포항역", region: "경북", lat: 36.07160517955013, lon: 129.34192815800867, nx: 103, ny: 96 },
+    { name: "진주역", region: "경남", lat: 35.150713268353236, lon: 128.1179167693619, nx: 82, ny: 76 },
+    { name: "동대구역", region: "대구", lat: 35.8793239931795, lon: 128.628393775388, nx: 90, ny: 92 },
+    { name: "울산역", region: "울산", lat: 35.551427139940806, lon: 129.1385985245419, nx: 100, ny: 85 },
+    { name: "부산역", region: "부산", lat: 35.11520340622514, lon: 129.04154985192403, nx: 98, ny: 75 }
 ];
 
 // 두 위치 사이의 거리 계산
@@ -65,6 +65,8 @@ function findNearestStation(latitude, longitude) {
         region: nearestStation.region,
         lat: nearestStation.lat,
         lon: nearestStation.lon,
+        nx: nearestStation.nx,
+        ny: nearestStation.ny,
         distance: shortestDistance
     };
 }
@@ -122,22 +124,7 @@ script.onload = () => {
             );
             marker.setMap(map);
 
-            // 선택된 역의 좌표를 격자로 변환
-            try {
-                const response = await fetch(
-                    `http://localhost:3000/api/grid?lat=${station.lat}&lon=${station.lon}`
-                );
-
-                if (!response.ok) {
-                    throw new Error("HTTP 오류: " + response.status);
-                }
-
-                const result = await response.text();
-                console.log("격자 변환 결과:", result);
-            } catch (error) {
-                console.error("격자 변환 실패:", error);
-            }
-            loadWeather(station);
+            await loadWeather(station);
         });
 
         // 예측 지역을 선택하면 지도 마커 이동
@@ -177,7 +164,7 @@ script.onload = () => {
 
                         console.log("선택된 지역:", station.region);
                         console.log("선택된 역:", station.name);
-
+                        loadWeather(station);
                         break;
                     }
                 }
@@ -240,33 +227,8 @@ async function loadWeather(station) {
 
     try {
         // 1. 위도와 경도를 기상청 격자로 변환
-        const gridResponse = await fetch(
-            `http://localhost:3000/api/grid?lat=${station.lat}&lon=${station.lon}`
-        );
-
-        if (!gridResponse.ok) {
-            throw new Error("격자 변환에 실패했습니다.");
-        }
-
-        const gridText = await gridResponse.text();
-        const lines = gridText.split("\n");
-        let nx = null;
-        let ny = null;
-
-        // #으로 시작하는 설명 줄을 제외하고 좌표 찾기
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-
-            if (line !== "" && !line.startsWith("#")) {
-                const values = line.split(",");
-
-                if (values.length >= 4) {
-                    nx = values[2].trim();
-                    ny = values[3].trim();
-                    break;
-                }
-            }
-        }
+        const nx = station.nx;
+        const ny = station.ny;
 
         if (nx === null || ny === null) {
             throw new Error("격자 좌표를 읽을 수 없습니다.");

@@ -1,4 +1,3 @@
-import { convertToGrid } from "../utils/weatherGrid.js";
 const KMA_URL =
   "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst";
 
@@ -38,20 +37,6 @@ async function showWeather(req, res, queryParams) {
     }
 }
 
-async function showGrid(req, res, queryParams) {
-    try {
-        const result = await convertToGrid(
-            queryParams.get("lat"),
-            queryParams.get("lon")
-        );
-        res.writeHead(200);
-        res.end(result);
-    } catch (error) {
-        console.error("[ERROR] " + error);
-        res.writeHead(500);
-        res.end(JSON.stringify({ message: "서버 오류" }));
-    }
-}
 
 export { getWeather };
-export default { showWeather, showGrid };
+export default { showWeather};
