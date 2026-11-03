@@ -1,19 +1,19 @@
-
 import auth from "../../auth.js";
+import session from "../utils/session.js";
 
 // 예측 목록 조회
 async function showPredictionList(request, response, queryParams) {
     try {
-        const userId = queryParams.get("user_id");
+        const userSession = session.getSession(request);
 
-        if (!userId) {
-            response.writeHead(400, {
-                "Content-Type": "application/json; charset=utf-8"
-            });
+        if (!userSession) {
+            response.writeHead(401);
             return response.end(JSON.stringify({
-                message: "사용자 정보가 없습니다."
+                message: "로그인이 필요합니다."
             }));
         }
+
+        const userId = userSession.userId;
 
         const result = await auth.getForecastList(userId);
 
