@@ -178,7 +178,7 @@
                 <h1>예측 리스트</h1>
                 <p>내가 진행한 예측을 확인해보세요.</p>
             </div>
-            <select class="form-select prediction-filter">
+            <select class="form-select prediction-filter" id="prediction-filter">
                 <option>전체</option>
                 <option>진행중</option>
                 <option>성공</option>
@@ -187,37 +187,11 @@
         </div>
 
         <div class="prediction-list">
-
-            <div class="prediction-list-card">
-                <div class="prediction-card-top">
-                    <div>
-                        <span class="prediction-region" id="prediction-region-1">서울</span>
-                        <span class="prediction-time" id="prediction-time-1">09월 11일 14:00</span>
-                    </div>
-                    <span class="prediction-status status-progress" id="prediction-status-1">진행중</span>
-                </div>
-                <div class="prediction-card-info">
-                    <div>
-                        <span>예측 대상</span>
-                        <strong id="prediction-target-1">날씨</strong>
-                    </div>
-                    <div>
-                        <span>예측 값</span>
-                        <strong id="prediction-value-1">맑음</strong>
-                    </div>
-                    <div>
-                        <span>배팅</span>
-                        <strong id="prediction-bet-1">100 P</strong>
-                    </div>
-                    <div>
-                        <span>예상 보상</span>
-                        <strong id="prediction-reward-1">+200 P</strong>
-                    </div>
-                </div>
+            <div id="prediction-list">
+                <p class="text-center text-muted">예측 목록을 불러오는 중...</p>
             </div>
-
         </div>
     </main>
-
+    <script type="module" src="../pages/predictionList.js"></script>
 </body>
 </html>
