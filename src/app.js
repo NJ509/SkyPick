@@ -122,7 +122,7 @@ const server = http
                     return await weatherApi.showWeather(request, response, queryParams);
                 }
                 if (requestUrl === "/api/predictionController") {
-                    return await forecastApi.showForecastList(
+                    return await predictionApi.showPredictionList(
                         request,
                         response,
                         queryParams
@@ -161,7 +161,7 @@ const server = http
                     return await shopApi.buyItem(request, response);
                 }
                 if (requestUrl === "/api/predictionController") {
-                    return await forecastApi.createForecast(request, response);
+                    return await predictionApi.createPrediction(request, response);
                 }
 
 
