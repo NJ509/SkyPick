@@ -21,6 +21,7 @@ const stations = [
     { name: "울산역", region: "울산", lat: 35.551427139940806, lon: 129.1385985245419, nx: 100, ny: 85 },
     { name: "부산역", region: "부산", lat: 35.11520340622514, lon: 129.04154985192403, nx: 98, ny: 75 }
 ];
+let selectedRegion = null;
 
 // 두 위치 사이의 거리 계산
 function getDistance(lat1, lon1, lat2, lon2) {
@@ -39,6 +40,7 @@ function getDistance(lat1, lon1, lat2, lon2) {
 
 // 가장 가까운 역 찾기
 function findNearestStation(latitude, longitude) {
+    let selectedRegion = null;
     let nearestStation = stations[0];
 
     let shortestDistance = getDistance(
@@ -97,6 +99,8 @@ script.onload = () => {
             // 가장 가까운 역 찾기
             const station = findNearestStation(latitude, longitude);
 
+            selectedRegion = station.region;
+
             console.log("선택된 지역:", station.region);
             console.log("선택된 역:", station.name);
 
@@ -124,7 +128,9 @@ script.onload = () => {
             );
             marker.setMap(map);
 
-            await loadWeather(station);
+            if (document.getElementById("weatherStatus")) {
+                await loadWeather(station);
+            }
         });
 
         // 예측 지역을 선택하면 지도 마커 이동
@@ -361,6 +367,8 @@ document.head.appendChild(script);
 const predictionTime = document.getElementById("prediction-time");
 
 function setPredictionTime() {
+    if (!predictionTime) return;
+
     const now = new Date();
 
     // 현재 시각 기준 2시간 뒤
@@ -388,3 +396,69 @@ function setPredictionTime() {
 }
 
 setPredictionTime();
+
+document.getElementById("complete-button").addEventListener("click", async () => {
+    if (!selectedRegion) {
+        alert("지역을 먼저 선택해주세요.");
+        return;
+    }
+
+    const signupData = JSON.parse(sessionStorage.getItem("signupData"));
+
+    if (!signupData) {
+        alert("회원가입 정보가 없습니다.");
+        location.href = "./signup.html";
+        return;
+    }
+
+    try {
+        // 회원가입 요청
+        const signupResponse = await fetch("http://localhost:3000/signup", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                ...signupData,
+                map: selectedRegion
+            })
+        });
+
+        const signupResult = await signupResponse.json();
+
+        if (!signupResponse.ok) {
+            alert(signupResult.message || "회원가입에 실패했습니다.");
+            return;
+        }
+
+        // 회원가입 성공 후 자동 로그인
+        const loginResponse = await fetch("http://localhost:3000/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({
+                id: signupData.id,
+                password: signupData.password
+            })
+        });
+
+        const loginResult = await loginResponse.json();
+
+        if (!loginResponse.ok) {
+            alert("회원가입은 성공했지만 자동 로그인에 실패했습니다.");
+            location.href = "./login.html";
+            return;
+        }
+
+        sessionStorage.removeItem("signupData");
+
+        alert("회원가입이 완료되었습니다!");
+        location.href = "./home.html";
+
+    } catch (error) {
+        console.error("회원가입 오류:", error);
+        alert("서버와 연결할 수 없습니다.");
+    }
+});
