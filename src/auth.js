@@ -461,6 +461,42 @@ async function buyItem(userId, itemId) {
     }
 }
 // ---
+
+
+async function showCollection(userId, filterType) {
+    let shopList = await getShopList();
+
+    if(!shopList) {
+        throw new Error("showCollection: Shop list load failed");
+    }
+
+    shopList = shopList.filter(
+        (item) => item.type !== "profile_image" && item.type !== "usage_item"
+    )
+
+    const filteredShopList = (filterType !== "all") ? (
+        shopList.filter((item) => item.type === filterType)
+    ) : shopList;
+
+    // ToDo: filteredShopList에는 있는데 유저 인벤에 없는 건 소유 여부 false, 있는 건 true로 반환
+    const inventory = JSON.parse(await getInventory(userId).data);
+
+    const collection = {};
+    for(const item of filteredShopList) {
+        for(const invItem of inventory) {
+            if(item.id === inventory.item_id) {
+                collection.push({invItem, isHave: true})
+            } else collection.push({item, isHave: false })
+        }
+    }
+
+    return {
+        code: AUTH_RESULT.SUCCESS,
+        message: "도감 불러오기 성공",
+        data: collection
+    };
+}
+
 export default {
     doLogin,
     signup,
@@ -472,4 +508,5 @@ export default {
     getShopList,
     buyItem,
     showRanking,
+    showCollection
 };

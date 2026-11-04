@@ -2,9 +2,12 @@
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 import http from "http";
+
 import userApi from "./js/api/user.js";
 import rankApi from "./js/api/rank.js";
 import shopApi from "./js/api/shop.js";
+import collectionApi from "./js/api/collection.js";
+
 const result = dotenv.config({path: new URL('../.env', import.meta.url)});
 const allowedOrigins = new Set(
   (process.env.CORS_ALLOWED_ORIGINS ?? "http://localhost:5173,http://127.0.0.1:5173")
@@ -115,6 +118,9 @@ const server = http
                 }
                 if(requestUrl === "/shop") {
                     return await shopApi.showShopList(response);
+                }
+                if(requestUrl === "/collection") {
+                    return await collectionApi.showCollection(request, response, queryParams.get("type"));
                 }
             } catch (e) {
                 console.log("[ERROR] " +e)
