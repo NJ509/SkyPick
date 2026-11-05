@@ -122,6 +122,9 @@ const server = http
                 if(requestUrl === "/collection") {
                     return await collectionApi.showCollection(request, response, queryParams.get("type"));
                 }
+                if(requestUrl === "/point") {
+                    return await userApi.showPoint(request, response);
+                }
             } catch (e) {
                 console.log("[ERROR] " +e)
                 response.destroy();

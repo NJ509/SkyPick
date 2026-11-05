@@ -3,9 +3,9 @@ import sessions from "../utils/session.js";
 import {AUTH_RESULT} from "../enums/authResult.js";
 
 async function showCollection(req, res, filterType) {
-    const filterTypes = "all | title | profile | theme"
+    const filterTypes = ["all", "title", "profile", "theme"];
 
-    if(!filterTypes || !filterTypes.includes(filterType)) {
+    if(!filterTypes.includes(filterType)) {
         return res.writeHead(400).end(JSON.stringify({
             message: "잘못된 필터링 요청. \nall, title, profile, theme 중 하나여야 함."
         }));
@@ -28,9 +28,14 @@ async function showCollection(req, res, filterType) {
         }))
     }
 
-    const response = await auth.showCollection(session.userId, filterType);
+    const result = await auth.showCollection(session.userId, filterType);
+    if(result.code === AUTH_RESULT.SUCCESS) {
+        return res.writeHead(200).end(JSON.stringify(result));
+    }
 
-    return res.writeHead(200).end(JSON.stringify(response))
+    return res.writeHead(500).end(JSON.stringify({
+        message: "도감을 불러오지 못했습니다."
+    }));
 }
 
 export default { showCollection };
