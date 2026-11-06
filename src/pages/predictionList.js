@@ -71,10 +71,10 @@ function renderPredictionList() {
     const filteredData = predictionData.filter((forecast) => {
         const status = getPredictionStatus(forecast);
 
-        if (filter === "all") return true;
-        if (filter === "progress") return status.text === "진행중";
-        if (filter === "success") return status.text === "성공";
-        if (filter === "fail") return status.text === "실패";
+        if (filter === "전체") return true;
+        if (filter === "진행중") return status.text === "진행중";
+        if (filter === "성공") return status.text === "성공";
+        if (filter === "실패") return status.text === "실패";
 
         return true;
     });
