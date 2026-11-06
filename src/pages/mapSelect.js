@@ -396,69 +396,72 @@ function setPredictionTime() {
 }
 
 setPredictionTime();
+const completeButton = document.getElementById("complete-button");
 
-document.getElementById("complete-button").addEventListener("click", async () => {
-    if (!selectedRegion) {
-        alert("지역을 먼저 선택해주세요.");
-        return;
-    }
-
-    const signupData = JSON.parse(sessionStorage.getItem("signupData"));
-
-    if (!signupData) {
-        alert("회원가입 정보가 없습니다.");
-        location.href = "./signup.html";
-        return;
-    }
-
-    try {
-        // 회원가입 요청
-        const signupResponse = await fetch("http://localhost:3000/signup", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                ...signupData,
-                map: selectedRegion
-            })
-        });
-
-        const signupResult = await signupResponse.json();
-
-        if (!signupResponse.ok) {
-            alert(signupResult.message || "회원가입에 실패했습니다.");
+if (completeButton) {
+    completeButton.addEventListener("click", async () => {
+        if (!selectedRegion) {
+            alert("지역을 먼저 선택해주세요.");
             return;
         }
 
-        // 회원가입 성공 후 자동 로그인
-        const loginResponse = await fetch("http://localhost:3000/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            credentials: "include",
-            body: JSON.stringify({
-                id: signupData.id,
-                password: signupData.password
-            })
-        });
+        const signupData = JSON.parse(sessionStorage.getItem("signupData"));
 
-        const loginResult = await loginResponse.json();
-
-        if (!loginResponse.ok) {
-            alert("회원가입은 성공했지만 자동 로그인에 실패했습니다.");
-            location.href = "./login.html";
+        if (!signupData) {
+            alert("회원가입 정보가 없습니다.");
+            location.href = "./signup.html";
             return;
         }
 
-        sessionStorage.removeItem("signupData");
+        try {
+            // 회원가입 요청
+            const signupResponse = await fetch("http://localhost:3000/signup", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    ...signupData,
+                    map: selectedRegion
+                })
+            });
 
-        alert("회원가입이 완료되었습니다!");
-        location.href = "./home.html";
+            const signupResult = await signupResponse.json();
 
-    } catch (error) {
-        console.error("회원가입 오류:", error);
-        alert("서버와 연결할 수 없습니다.");
+            if (!signupResponse.ok) {
+                alert(signupResult.message || "회원가입에 실패했습니다.");
+                return;
+            }
+
+            // 회원가입 성공 후 자동 로그인
+            const loginResponse = await fetch("http://localhost:3000/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    id: signupData.id,
+                    password: signupData.password
+                })
+            });
+
+            const loginResult = await loginResponse.json();
+
+            if (!loginResponse.ok) {
+                alert("회원가입은 성공했지만 자동 로그인에 실패했습니다.");
+                location.href = "./login.html";
+                return;
+            }
+
+            sessionStorage.removeItem("signupData");
+
+            alert("회원가입이 완료되었습니다!");
+            location.href = "./home.html";
+
+        } catch (error) {
+            console.error("회원가입 오류:", error);
+            alert("서버와 연결할 수 없습니다.");
+        }
     }
-});
+);}

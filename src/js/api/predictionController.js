@@ -1,21 +1,23 @@
-
 import auth from "../../auth.js";
+import session from "../utils/session.js";
 
 // 예측 목록 조회
 async function showPredictionList(request, response, queryParams) {
     try {
-        const userId = queryParams.get("user_id");
+        // 로그인 세션 확인
+        const userSession = session.getSession(request);
 
-        if (!userId) {
-            response.writeHead(400, {
+        if (!userSession) {
+            response.writeHead(401, {
                 "Content-Type": "application/json; charset=utf-8"
             });
             return response.end(JSON.stringify({
-                message: "사용자 정보가 없습니다."
+                message: "로그인이 필요합니다."
             }));
         }
 
-        const result = await auth.getForecastList(userId);
+        // 세션에 저장된 사용자 ID 사용
+        const result = await auth.getForecastList(userSession.userId);
 
         response.writeHead(200, {
             "Content-Type": "application/json; charset=utf-8"
@@ -37,8 +39,19 @@ async function showPredictionList(request, response, queryParams) {
 // 예측 등록
 async function createPrediction(request, response) {
     try {
+        // 로그인 세션 확인
+        const userSession = session.getSession(request);
+
+        if (!userSession) {
+            response.writeHead(401, {
+                "Content-Type": "application/json; charset=utf-8"
+            });
+            return response.end(JSON.stringify({
+                message: "로그인이 필요합니다."
+            }));
+        }
+
         const {
-            user_id,
             forecast_map,
             forecast_time,
             forecast_type,
@@ -47,7 +60,6 @@ async function createPrediction(request, response) {
         } = request.body;
 
         if (
-            !user_id ||
             !forecast_map ||
             !forecast_time ||
             !forecast_type ||
@@ -62,8 +74,9 @@ async function createPrediction(request, response) {
             }));
         }
 
+        // 요청의 user_id가 아닌 세션의 userId 사용
         const result = await auth.createForecast(
-            user_id,
+            userSession.userId,
             forecast_map,
             forecast_time,
             forecast_type,
@@ -92,6 +105,6 @@ async function createPrediction(request, response) {
 }
 
 export default {
-    showPredictionList,
-    createPrediction
+    showPredictionList: showPredictionList,
+    createForecast: createPrediction
 };

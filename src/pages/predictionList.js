@@ -71,10 +71,10 @@ function renderPredictionList() {
     const filteredData = predictionData.filter((forecast) => {
         const status = getPredictionStatus(forecast);
 
-        if (filter === "all") return true;
-        if (filter === "progress") return status.text === "진행중";
-        if (filter === "success") return status.text === "성공";
-        if (filter === "fail") return status.text === "실패";
+        if (filter === "전체") return true;
+        if (filter === "진행중") return status.text === "진행중";
+        if (filter === "성공") return status.text === "성공";
+        if (filter === "실패") return status.text === "실패";
 
         return true;
     });
@@ -145,16 +145,13 @@ function renderPredictionList() {
 
 // DB에서 예측 목록 조회
 async function loadPredictionList() {
-    const userId = localStorage.getItem("userId");
-
-    if (!userId) {
-        predictionList.textContent = "로그인이 필요합니다.";
-        return;
-    }
-
     try {
         const response = await fetch(
-            `http://localhost:3000/api/prediction?user_id=${encodeURIComponent(userId)}`
+            "http://localhost:3000/api/predictionController",
+            {
+                method: "GET",
+                credentials: "include"
+            }
         );
 
         const data = await response.json();
@@ -168,7 +165,11 @@ async function loadPredictionList() {
 
     } catch (error) {
         console.error("예측 목록 조회 실패:", error);
-        predictionList.textContent = "예측 목록을 불러오지 못했습니다.";
+
+        predictionList.textContent =
+            error.message === "로그인이 필요합니다."
+                ? "로그인이 필요합니다."
+                : "예측 목록을 불러오지 못했습니다.";
     }
 }
 
