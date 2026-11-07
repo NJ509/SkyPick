@@ -332,16 +332,19 @@ async function showRanking(type) {
         query = "SELECT id, name, point, current_streak, equipped_title, equipped_profile_image FROM user ORDER BY point DESC, current_streak DESC LIMIT 100";
     } else if (type === "weekend") {
         query = "SELECT * FROM weekly_stat ORDER BY earned_point DESC, success_count DESC LIMIT 100"; // 여기 나중에 칭호나 프사도 가능하게 해줘야 함.
-    } else return { code: AUTH_RESULT.NOT_VALID };
+    } else {
+      return { code: AUTH_RESULT.NOT_VALID };
+    }
 
     const rows = await db.executeQueryV(query);
-    const row = rows[0];
 
-    if(!row) return { code: AUTH_RESULT.FAILED }
+    if (rows.length === 0) {
+        return { code: AUTH_RESULT.FAILED };
+    }
 
     return {
         code: AUTH_RESULT.SUCCESS,
-        data: row
+        data: rows
     };
 }
 
@@ -482,6 +485,118 @@ async function buyItem(userId, itemId) {
         connection.release();
     }
 }
+
+/**
+ * 예측 데이터 등록 및 포인트 차감
+ */
+async function createForecast(
+    userId,
+    forecastMap,
+    forecastTime,
+    forecastType,
+    predictedValue,
+    usedPoint
+) {
+    const connection = await db.getConnection();
+
+    try {
+        // 배팅 포인트 검증
+        usedPoint = Number(usedPoint);
+
+        if (!Number.isInteger(usedPoint) || usedPoint < 0) {
+            throw new Error("올바르지 않은 배팅 포인트입니다.");
+        }
+
+        // 트랜잭션 시작
+        await connection.beginTransaction();
+
+        // 사용자 포인트 확인 (동시 요청 방지)
+        const [userRows] = await connection.execute(
+            "SELECT point FROM user WHERE id = ? FOR UPDATE",
+            [userId]
+        );
+
+        if (userRows.length === 0) {
+            throw new Error("사용자를 찾을 수 없습니다.");
+        }
+
+        if (userRows[0].point < usedPoint) {
+            throw new Error("보유 포인트가 부족합니다.");
+        }
+
+        // 포인트 차감
+        await connection.execute(
+            "UPDATE user SET point = point - ? WHERE id = ?",
+            [usedPoint, userId]
+        );
+
+        // 예측 데이터 등록
+        const [result] = await connection.execute(
+            `INSERT INTO forecast (
+                user_id,
+                submitted_at,
+                forecast_map,
+                forecast_time,
+                forecast_type,
+                predicted_value,
+                used_point,
+                beting_type
+            )
+            VALUES (?, NOW(), ?, ?, ?, ?, ?, ?)`,
+            [
+                userId,
+                forecastMap,
+                forecastTime,
+                forecastType,
+                String(predictedValue),
+                usedPoint,
+                "정배"
+            ]
+        );
+
+        // 모든 작업 성공 시 저장
+        await connection.commit();
+
+        return {
+            success: true,
+            forecastId: result.insertId
+        };
+
+    } catch (error) {
+        // 오류 발생 시 모든 변경사항 취소
+        await connection.rollback();
+        throw error;
+
+    } finally {
+        // DB 연결 반환
+        connection.release();
+    }
+}
+
+/**
+ * 사용자별 예측 목록 조회
+ */
+async function getForecastList(userId) {
+    const query = `
+        SELECT
+            id,
+            forecast_map,
+            forecast_time,
+            forecast_type,
+            predicted_value,
+            used_point,
+            beting_type,
+            is_correct,
+            is_settled
+        FROM forecast
+        WHERE user_id = ?
+        ORDER BY submitted_at DESC
+    `;
+
+    return await db.executeQueryV(query, userId);
+}
+
+
 // ---
 
 
@@ -531,5 +646,7 @@ export default {
     getShopList,
     buyItem,
     showRanking,
+    createForecast,
+    getForecastList
     showCollection
 };

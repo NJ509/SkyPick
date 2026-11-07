@@ -1,4 +1,4 @@
-// 서버 실행 파일
+﻿// 서버 실행 파일
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 import http from "http";
@@ -6,6 +6,8 @@ import http from "http";
 import userApi from "./js/api/user.js";
 import rankApi from "./js/api/rank.js";
 import shopApi from "./js/api/shop.js";
+import weatherApi from "./js/api/weather.js";
+import predictionApi from "./js/api/predictionController.js";
 import collectionApi from "./js/api/collection.js";
 
 const result = dotenv.config({path: new URL('../.env', import.meta.url)});
@@ -34,11 +36,11 @@ class Database {
     return this.db.getConnection();
   }
 
-  // 에러는 서비스에서
-  /** 사실 얘는 필요 없을 것 같긴 한데 혹시 모르니까
+  //  에러는 서비스에서
+  /**  사실 얘는 필요 없을 것 같긴 한데 혹시 모르니까
    * DB 쿼리 실행
    * @param {*} query  SQL 쿼리문
-   * @param  {...params} params 쿼리 '?' 에 들어갈 값
+   * @param  {...params}  params 쿼리 '?' 에 들어갈 값
    * @returns {Promise} 쿼리 결과 (값, 메타데이터)
    */
   async executeQueryVM(query, ...params) {
@@ -47,8 +49,8 @@ class Database {
   /**
    * DB 쿼리 실행
    * @param {*} query  SQL 쿼리문
-   * @param  {...params} params 쿼리 '?' 에 들어갈 값
-   * @returns {Promise} 쿼리 결과 (값)
+   * @param  {...params} params 쿼리- '?' 에 들어갈 값
+   * @returns {Promise} 쿼리 결과 (값, 메타데이터)
    */
   async executeQueryV(query, ...params) {
     const [row] = await this.db.execute(query, params);
@@ -60,7 +62,7 @@ class Database {
    * @param {*} connection 트랜잭션 연결 객체
    * @param {*} query 쿼리문
    * @param  {...any} params 파라미터
-   * @returns 결과값
+   * @returns 寃곌낵媛?
    */
   async executeQueryForTransaction(connection, query, ...params) {
     const [row] = await connection.execute(query, params);
@@ -109,9 +111,9 @@ const server = http
             body += chunk;
         })
 
-        request.on("end", async () => {
-            try {
-                request.body = body ? JSON.parse(body) : {};
+      request.on("end", async () => {
+        try {
+          request.body = body ? JSON.parse(body) : {};
 
                 if (requestUrl === "/rank") {
                     return await rankApi.showRanking(request, response, queryParams.get("type"));
@@ -119,6 +121,16 @@ const server = http
                 if(requestUrl === "/shop") {
                     return await shopApi.showShopList(response);
                 }
+                if (requestUrl === "/api/weather") {
+                    return await weatherApi.showWeather(request, response, queryParams);
+                }
+                if (requestUrl === "/api/predictionController") {
+                  return await predictionApi.showPredictionList(
+                      request,
+                      response,
+                      queryParams
+                  );
+              }
                 if(requestUrl === "/collection") {
                     return await collectionApi.showCollection(request, response, queryParams.get("type"));
                 }
@@ -157,6 +169,9 @@ const server = http
                 if (requestUrl === "/shop") {
                     return await shopApi.buyItem(request, response);
                 }
+                if (requestUrl === "/api/predictionController") {
+                    return await predictionApi.createForecast(request, response);
+                }
 
 
                 response.writeHead(404);
@@ -178,3 +193,4 @@ const server = http
   .listen(3000, () => {
     console.log("Server running at http://localhost:3000/");
   });
+
