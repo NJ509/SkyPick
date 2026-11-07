@@ -244,16 +244,17 @@ async function updateUser(id, value, type, connection = null) {
 async function showPoint(userId) {
     const query = "SELECT point FROM user WHERE id = ?";
     try {
-        const [row] = await db.executeQueryV(query, userId);
-        if (!row)
+        const rows = await db.executeQueryV(query, userId);
+
+        if (rows.length === 0) {
             return {
                 code: AUTH_RESULT.NOT_FOUND,
             };
-        else
-            return {
-                code: AUTH_RESULT.SUCCESS,
-                data: row,
-            };
+        }
+        return {
+            code: AUTH_RESULT.SUCCESS,
+            data: rows[0],
+        };
     } catch (e) {
         console.log(e);
         return {
