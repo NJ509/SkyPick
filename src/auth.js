@@ -647,6 +647,6 @@ export default {
     buyItem,
     showRanking,
     createForecast,
-    getForecastList
+    getForecastList,
     showCollection
 };
