@@ -1,8 +1,9 @@
 import auth from "../../auth.js";
 
 async function showRanking(req, res, type) {
-    const types = "total | weekend"
-    if(!type || !types.includes(type))
+    const types = ["total", "weekend"];
+
+    if (!types.includes(type))
         return res.writeHead(400).end(JSON.stringify({message: "잘못된 요청"}));
 
     const result = await auth.showRanking(type);

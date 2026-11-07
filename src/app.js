@@ -2,6 +2,7 @@
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 import http from "http";
+import fs from "node:fs";
 
 import userApi from "./js/api/user.js";
 import rankApi from "./js/api/rank.js";
@@ -71,6 +72,71 @@ class Database {
 const db = new Database();
 export { db };
 
+function sendPage(requestUrl, response) {
+    try {
+        const fileName = decodeURIComponent(requestUrl);
+
+        // pages 폴더 밖으로 밖 불가임
+        if (fileName.includes("..") || fileName.includes("\\")) {
+            response.writeHead(403);
+            return response.end();
+        }
+
+        let contentType;
+        // 프사? 암튼 이미지들
+        if (fileName.startsWith("/images/")) {
+            let imageType;
+
+            if (fileName.endsWith(".png")) {
+                imageType = "image/png";
+            } else if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+                imageType = "image/jpeg";
+            } else if (fileName.endsWith(".webp")) {
+                imageType = "image/webp";
+            } else {
+                response.writeHead(404);
+                return response.end();
+            }
+
+            const image = fs.readFileSync(
+                new URL("../public" + fileName, import.meta.url)
+            );
+
+            response.writeHead(200, { "Content-Type": imageType });
+            return response.end(image);
+        }
+
+        if (fileName.endsWith(".html")) {
+            contentType = "text/html; charset=utf-8";
+        } else if (fileName.endsWith(".js")) {
+            contentType = "text/javascript; charset=utf-8";
+        } else if (fileName.endsWith(".css")) {
+            contentType = "text/css; charset=utf-8";
+        } else {
+            response.writeHead(404);
+            return response.end();
+        }
+
+        let file;
+
+        if (fileName === "/style.css") {
+            file = fs.readFileSync(
+                new URL("./style.css", import.meta.url)
+            );
+        } else {
+            file = fs.readFileSync(
+                new URL("./pages" + fileName, import.meta.url)
+            );
+        }
+
+        response.writeHead(200, { "Content-Type": contentType });
+        response.end(file);
+    } catch {
+        response.writeHead(404);
+        response.end("파일을 찾을 수 없습니다.");
+    }
+}
+
 const server = http
   .createServer((request, response) => {
     response.setHeader("Content-Type", "application/json;charset=UTF-8");
@@ -125,6 +191,8 @@ const server = http
                 if(requestUrl === "/point") {
                     return await userApi.showPoint(request, response);
                 }
+
+                return sendPage(requestUrl, response); // 페이지 ㅂㅂ여주기 (/ranking.html → ./src/pages/ranking.html)
             } catch (e) {
                 console.log("[ERROR] " +e)
                 response.destroy();

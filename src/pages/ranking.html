@@ -322,7 +322,7 @@
             </div>
 
             <div class="user-info">
-                <span class="point">1,250 P</span>
+                <span id="user-point" class="point">- P</span>
                 <button class="profile-btn">프로필</button>
             </div>
         </div>
@@ -335,33 +335,47 @@
                 <p>이번 주 최고의 날씨 예측왕을 확인해보세요.</p>
             </div>
             <div class="ranking-tabs">
-                <button class="ranking-tab active">주간 랭킹</button>
-                <button class="ranking-tab">전체 랭킹</button>
+                <button
+                        id="weekend-tab"
+                        class="ranking-tab active"
+                        onclick="loadRanking('weekend')">
+                    주간 랭킹
+                </button>
+
+                <button
+                        id="total-tab"
+                        class="ranking-tab"
+                        onclick="loadRanking('total')">
+                    전체 랭킹
+                </button>
             </div>
         </div>
 
         <section class="ranking-top3">
             <div class="rank-card rank-second">
-                <div class="rank-profile">o</div>
+                <div id="rank2-image" class="rank-profile"></div>
                 <span class="rank-number">2</span>
-                <h2>이름2</h2>
-                <p>12,450 P</p>
+                <p id="rank2-title"></p>
+                <h2 id="rank2-name"></h2>
+                <p id="rank2-point"></p>
                 <div class="podium podium-second"></div>
             </div>
 
             <div class="rank-card rank-first">
-                <div class="rank-profile">o</div>
+                <div id="rank1-image" class="rank-profile"></div>
                 <span class="rank-number">1</span>
-                <h2>이름1</h2>
-                <p>18,920 P</p>
+                <p id="rank1-title"></p>
+                <h2 id="rank1-name"></h2>
+                <p id="rank1-point"></p>
                 <div class="podium podium-first"></div>
             </div>
 
             <div class="rank-card rank-third">
-                <div class="rank-profile">o</div>
+                <div id="rank3-image" class="rank-profile"></div>
                 <span class="rank-number">3</span>
-                <h2>이름3</h2>
-                <p>10,380 P</p>
+                <p id="rank3-title"></p>
+                <h2 id="rank3-name"></h2>
+                <p id="rank3-point"></p>
                 <div class="podium podium-third"></div>
             </div>
         </section>
@@ -369,131 +383,17 @@
         <section class="ranking-list-section">
             <div class="ranking-list-header">
                 <h2>전체 순위</h2>
-                <span>4위 ~ 15위</span>
+                <span id="ranking-range"></span>
             </div>
 
-            <div class="ranking-list">
-                <div class="ranking-item">
-                    <strong class="ranking-number">4</strong>
-                    <div class="ranking-profile">o</div>
-                    <div class="ranking-user">
-                        <strong>이름4</strong>
-                        <span>예측 32회</span>
-                    </div>
-                    <strong class="ranking-point">9,820 P</strong>
-                </div>
-
-                <div class="ranking-item">
-                    <strong class="ranking-number">5</strong>
-                    <div class="ranking-profile">o</div>
-                    <div class="ranking-user">
-                        <strong>이름5</strong>
-                        <span>예측 29회</span>
-                    </div>
-                    <strong class="ranking-point">9,150 P</strong>
-                </div>
-
-                <div class="ranking-item">
-                    <strong class="ranking-number">6</strong>
-                    <div class="ranking-profile">o</div>
-                    <div class="ranking-user">
-                        <strong>이름6</strong>
-                        <span>예측 27회</span>
-                    </div>
-                    <strong class="ranking-point">8,740 P</strong>
-                </div>
-
-                <div class="ranking-item">
-                    <strong class="ranking-number">7</strong>
-                    <div class="ranking-profile">o</div>
-                    <div class="ranking-user">
-                        <strong>이름7</strong>
-                        <span>예측 25회</span>
-                    </div>
-                    <strong class="ranking-point">8,320 P</strong>
-                </div>
-
-                <div class="ranking-item">
-                    <strong class="ranking-number">8</strong>
-                    <div class="ranking-profile">o</div>
-                    <div class="ranking-user">
-                        <strong>이름8</strong>
-                        <span>예측 23회</span>
-                    </div>
-                    <strong class="ranking-point">7,950 P</strong>
-                </div>
-
-                <div class="ranking-item">
-                    <strong class="ranking-number">9</strong>
-                    <div class="ranking-profile">o</div>
-                    <div class="ranking-user">
-                        <strong>이름9</strong>
-                        <span>예측 21회</span>
-                    </div>
-                    <strong class="ranking-point">7,620 P</strong>
-                </div>
-
-                <div class="ranking-item">
-                    <strong class="ranking-number">10</strong>
-                    <div class="ranking-profile">o</div>
-                    <div class="ranking-user">
-                        <strong>이름10</strong>
-                        <span>예측 20회</span>
-                    </div>
-                    <strong class="ranking-point">6,940 P</strong>
-                </div>
-
-                <div class="ranking-item">
-                    <strong class="ranking-number">11</strong>
-                    <div class="ranking-profile">o</div>
-                    <div class="ranking-user">
-                        <strong>이름11</strong>
-                        <span>예측 16회</span>
-                    </div>
-                    <strong class="ranking-point">5,310 P</strong>
-                </div>
-
-                <div class="ranking-item">
-                    <strong class="ranking-number">12</strong>
-                    <div class="ranking-profile">o</div>
-                    <div class="ranking-user">
-                        <strong>이름12</strong>
-                        <span>예측 10회</span>
-                    </div>
-                    <strong class="ranking-point">3,100 P</strong>
-                </div>
-
-                <div class="ranking-item">
-                    <strong class="ranking-number">13</strong>
-                    <div class="ranking-profile">o</div>
-                    <div class="ranking-user">
-                        <strong>이름13</strong>
-                        <span>예측 6회</span>
-                    </div>
-                    <strong class="ranking-point">2,010 P</strong>
-                </div>
-
-                <div class="ranking-item">
-                    <strong class="ranking-number">14</strong>
-                    <div class="ranking-profile">o</div>
-                    <div class="ranking-user">
-                        <strong>이름14</strong>
-                        <span>예측 2회</span>
-                    </div>
-                    <strong class="ranking-point">2,310 P</strong>
-                </div>
-
-                <div class="ranking-item">
-                    <strong class="ranking-number">15</strong>
-                    <div class="ranking-profile">o</div>
-                    <div class="ranking-user">
-                        <strong>이름15</strong>
-                        <span>예측 1회</span>
-                    </div>
-                    <strong class="ranking-point">1,030 P</strong>
-                </div>
-            </div>
+            <div id="ranking-list" class="ranking-list"></div>
         </section>
     </main>
+
+    <script src="./common.js"></script>
+    <script>
+        // 첨 열면 주간랭킹
+        loadRanking("weekend");
+    </script>
 </body>
 </html>
