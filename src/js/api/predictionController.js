@@ -36,10 +36,9 @@ async function showPredictionList(request, response, queryParams) {
     }
 }
 
-// 예측 등록
 async function createPrediction(request, response) {
     try {
-        // 로그인 세션 확인
+        // 1. 로그인 세션 확인
         const userSession = session.getSession(request);
 
         if (!userSession) {
@@ -59,6 +58,7 @@ async function createPrediction(request, response) {
             used_point
         } = request.body;
 
+        // 2. 필수 정보 확인
         if (
             !forecast_map ||
             !forecast_time ||
@@ -74,7 +74,29 @@ async function createPrediction(request, response) {
             }));
         }
 
-        // 요청의 user_id가 아닌 세션의 userId 사용
+        // 3. 예측 시간 검증
+        const forecastTimestamp = new Date(forecast_time).getTime();
+        const currentTime = Date.now();
+
+        const timeDifference = forecastTimestamp - currentTime;
+
+        const MIN_TIME = 2 * 60 * 60 * 1000;
+        const MAX_TIME = 48 * 60 * 60 * 1000;
+
+        if (
+            !Number.isFinite(forecastTimestamp) ||
+            timeDifference < MIN_TIME ||
+            timeDifference > MAX_TIME
+        ) {
+            response.writeHead(400, {
+                "Content-Type": "application/json; charset=utf-8"
+            });
+            return response.end(JSON.stringify({
+                message: "예측 시간은 현재 시각 기준 2~48시간 이내여야 합니다."
+            }));
+        }
+
+        // 4. 세션의 사용자 ID로 예측 등록
         const result = await auth.createForecast(
             userSession.userId,
             forecast_map,

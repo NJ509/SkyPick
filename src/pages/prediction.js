@@ -58,3 +58,48 @@ document.getElementById("betting").addEventListener("input", function () {
 
 
 updateReward();
+
+
+// 예측 등록 버튼
+document.querySelector(".submit-btn").addEventListener("click", async function () {
+    const forecastMap = document.getElementById("region").value;
+    const forecastTime = document.getElementById("prediction-time").value;
+    const forecastType = document.querySelector(".prediction-type.active").dataset.target;
+    const predictedValue = document.getElementById("prediction-value").value;
+    const usedPoint = Number(document.getElementById("betting").value);
+
+    if (!forecastTime || !predictedValue) {
+        alert("예측 시간과 예측값을 입력해주세요.");
+        return;
+    }
+
+    try {
+        const response = await fetch("http://localhost:3000/api/predictionController", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({
+                forecast_map: forecastMap,
+                forecast_time: forecastTime,
+                forecast_type: forecastType,
+                predicted_value: predictedValue,
+                used_point: usedPoint
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.message || "예측 등록에 실패했습니다.");
+            return;
+        }
+
+        alert("예측이 등록되었습니다.");
+
+    } catch (error) {
+        console.error("예측 등록 오류:", error);
+        alert("서버와 통신할 수 없습니다.");
+    }
+});
