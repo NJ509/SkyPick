@@ -170,7 +170,7 @@ const server = http
                     return await shopApi.buyItem(request, response);
                 }
                 if (requestUrl === "/api/predictionController") {
-                    return await predictionApi.createForecast(request, response);
+                    return await predictionApi.createPrediction(request, response);
                 }
 
 

@@ -4,20 +4,19 @@ import session from "../utils/session.js";
 // 예측 목록 조회
 async function showPredictionList(request, response, queryParams) {
     try {
-        // 로그인 세션 확인
         const userSession = session.getSession(request);
 
         if (!userSession) {
-            response.writeHead(401, {
-                "Content-Type": "application/json; charset=utf-8"
-            });
+            response.writeHead(401);
             return response.end(JSON.stringify({
                 message: "로그인이 필요합니다."
             }));
         }
 
-        // 세션에 저장된 사용자 ID 사용
-        const result = await auth.getForecastList(userSession.userId);
+
+        const userId = userSession.userId;
+
+        const result = await auth.getForecastList(userId);
 
         response.writeHead(200, {
             "Content-Type": "application/json; charset=utf-8"
@@ -127,6 +126,6 @@ async function createPrediction(request, response) {
 }
 
 export default {
-    showPredictionList: showPredictionList,
-    createForecast: createPrediction
+    showPredictionList,
+    createPrediction
 };

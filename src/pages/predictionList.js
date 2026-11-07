@@ -165,11 +165,7 @@ async function loadPredictionList() {
 
     } catch (error) {
         console.error("예측 목록 조회 실패:", error);
-
-        predictionList.textContent =
-            error.message === "로그인이 필요합니다."
-                ? "로그인이 필요합니다."
-                : "예측 목록을 불러오지 못했습니다.";
+        predictionList.textContent = error.message;
     }
 }
 

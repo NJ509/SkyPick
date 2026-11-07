@@ -176,6 +176,43 @@ script.onload = () => {
                 }
             });
         }
+        
+        // 최초 페이지 로딩 시 기본 지역 날씨 조회
+        const initialRegion = regionSelect.value || "서울";
+
+        const initialStation =
+            stations.find(station => station.region === initialRegion)
+            || stations[0];
+
+        // 기본 지역 선택값 설정
+        if (regionSelect) {
+            regionSelect.value = initialStation.region;
+        }
+
+        // 지도 위 지역명 표시
+        const mapRegion = document.getElementById("mapRegion");
+        if (mapRegion) {
+            mapRegion.textContent = initialStation.region;
+        }
+
+        // 현재 날씨 영역 지역명 표시
+        const weatherRegion = document.getElementById("weatherRegion");
+        if (weatherRegion) {
+            weatherRegion.textContent = initialStation.region;
+        }
+
+        // 기본 지역 위치에 마커 표시
+        const initialPosition = new kakao.maps.LatLng(
+            initialStation.lat,
+            initialStation.lon
+        );
+
+        marker.setPosition(initialPosition);
+        marker.setMap(map);
+        map.setCenter(initialPosition);
+
+        // 기본 지역 날씨 조회
+        loadWeather(initialStation);
     });
 };
 
