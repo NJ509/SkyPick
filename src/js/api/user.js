@@ -2,6 +2,7 @@
 
 import auth from "../../auth.js";
 import session from "../utils/session.js";
+import {AUTH_RESULT} from "../enums/authResult.js";
 
 /**
  * 유저 로그인 api
@@ -75,4 +76,24 @@ async function signup(req, res) {
   }
 }
 
-export default { login, signup };
+async function showPoint(req, res) {
+  const userSession = session.getSession(req);
+
+  if (!userSession?.userId) {
+    return res.writeHead(401).end(JSON.stringify({
+      message: "로그인이 필요한 작업입니다."
+    }));
+  }
+
+  const result = await auth.showPoint(userSession.userId);
+  switch (result.code) {
+    case AUTH_RESULT.SUCCESS:
+      return res.writeHead(200).end(JSON.stringify(result));
+    case AUTH_RESULT.NOT_FOUND:
+      return res.writeHead(404).end(JSON.stringify({ message: "유저 정보를 찾을 수 없습니다." }));
+    default:
+      return res.writeHead(500).end(JSON.stringify({ message: "포인트를 불러오지 못했습니다." }));
+  }
+}
+
+export default { login, signup, showPoint };
