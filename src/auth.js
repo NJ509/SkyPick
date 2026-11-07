@@ -241,6 +241,28 @@ async function updateUser(id, value, type, connection = null) {
   }
 }
 
+async function showPoint(userId) {
+    const query = "SELECT point FROM user WHERE id = ?";
+    try {
+        const [row] = await db.executeQueryV(query, userId);
+        if (!row)
+            return {
+                code: AUTH_RESULT.NOT_FOUND,
+            };
+        else
+            return {
+                code: AUTH_RESULT.SUCCESS,
+                data: row,
+            };
+    } catch (e) {
+        console.log(e);
+        return {
+            status: 500,
+            message: "Server OR DB ERROR",
+        };
+    }
+}
+
 /**
  * 인벤토리 업데이트 <br>
  * 인벤토리 변경 실패 시, 해당 유저의 인벤토리 조회해서 행 있는데, 실패한거면 status: 500, <br>
@@ -310,16 +332,19 @@ async function showRanking(type) {
         query = "SELECT id, name, point, current_streak, equipped_title, equipped_profile_image FROM user ORDER BY point DESC, current_streak DESC LIMIT 100";
     } else if (type === "weekend") {
         query = "SELECT * FROM weekly_stat ORDER BY earned_point DESC, success_count DESC LIMIT 100"; // 여기 나중에 칭호나 프사도 가능하게 해줘야 함.
-    } else return { code: AUTH_RESULT.NOT_VALID };
+    } else {
+      return { code: AUTH_RESULT.NOT_VALID };
+    }
 
     const rows = await db.executeQueryV(query);
-    const row = rows[0];
 
-    if(!row) return { code: AUTH_RESULT.FAILED }
+    if (rows.length === 0) {
+        return { code: AUTH_RESULT.FAILED };
+    }
 
     return {
         code: AUTH_RESULT.SUCCESS,
-        data: row
+        data: rows
     };
 }
 
@@ -573,17 +598,55 @@ async function getForecastList(userId) {
 
 
 // ---
+
+
+async function showCollection(userId, filterType) {
+    try {
+        const shopList = await getShopList();
+        const inventory = await db.executeQueryV(
+            "SELECT item.type, item.value FROM inventory JOIN item ON item.id = inventory.item_id " +
+            "WHERE inventory.user_id = ? AND inventory.quantity > 0",
+            userId
+        );
+
+        const itemType = filterType === "profile" ? "profile_image" : filterType;
+        const filteredShopList = shopList.filter(
+            (item) => item.type !== "usage_item" && (filterType === "all" || item.type === itemType)
+        );
+
+        // 혹시 모르니까 같은 템 다른 ID 등록되면
+        const ownedItems = new Set(
+            inventory.map((item) => `${item.type}:${item.value}`)
+        );
+        const collection = filteredShopList.map((item) => ({
+            item,
+            isHave: ownedItems.has(`${item.type}:${item.value}`),
+        }));
+
+        return {
+            code: AUTH_RESULT.SUCCESS,
+            message: "도감 불러오기 성공",
+            data: collection
+        };
+    } catch (e) {
+        console.log("[ERROR] Failed Load Collection: " + e);
+        return { code: AUTH_RESULT.FAILED };
+    }
+}
+
 export default {
     doLogin,
     signup,
     newMap,
     findByUserId,
     updateUser,
+    showPoint,
     inventoryUpdate,
     getInventory,
     getShopList,
     buyItem,
     showRanking,
     createForecast,
-    getForecastList
+    getForecastList,
+    showCollection
 };

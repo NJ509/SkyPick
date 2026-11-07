@@ -2,11 +2,14 @@
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 import http from "http";
+
 import userApi from "./js/api/user.js";
 import rankApi from "./js/api/rank.js";
 import shopApi from "./js/api/shop.js";
 import weatherApi from "./js/api/weather.js";
 import predictionApi from "./js/api/predictionController.js";
+import collectionApi from "./js/api/collection.js";
+
 const result = dotenv.config({path: new URL('../.env', import.meta.url)});
 const allowedOrigins = new Set(
   (process.env.CORS_ALLOWED_ORIGINS ?? "http://localhost:5173,http://127.0.0.1:5173")
@@ -122,11 +125,17 @@ const server = http
                     return await weatherApi.showWeather(request, response, queryParams);
                 }
                 if (requestUrl === "/api/predictionController") {
-                    return await predictionApi.showPredictionList(
-                        request,
-                        response,
-                        queryParams
-                    );
+                  return await predictionApi.showPredictionList(
+                      request,
+                      response,
+                      queryParams
+                  );
+              }
+                if(requestUrl === "/collection") {
+                    return await collectionApi.showCollection(request, response, queryParams.get("type"));
+                }
+                if(requestUrl === "/point") {
+                    return await userApi.showPoint(request, response);
                 }
             } catch (e) {
                 console.log("[ERROR] " +e)
