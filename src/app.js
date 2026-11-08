@@ -172,6 +172,15 @@ const server = http
         if(requestUrl) {
             requestUrl = url.pathname;
         }
+        if (requestUrl === "/api/config") {
+            response.writeHead(200, {
+                "Content-Type": "application/json; charset=UTF-8"
+            });
+
+            return response.end(JSON.stringify({
+                kakaoMapApiKey: process.env.KAKAO_MAP_API_KEY
+            }));
+        }
 
         let body = "";
         request.on("data", (chunk) => {
