@@ -1,8 +1,0 @@
-### VS Code ###
-.vscode/
-
-# p
-.env
-
-node_modules/
-.idea
