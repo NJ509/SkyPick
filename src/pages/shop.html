@@ -8,9 +8,10 @@
     <link rel="stylesheet" href="../style.css">
     <style>
         .shop-container {
-            height: calc(100vh - 70px);
+            min-height: calc(100vh - 72px);
+            height: auto;
             padding: 25px 30px;
-            overflow: hidden;
+            overflow: visible;
         }
 
         .shop-header {
@@ -53,15 +54,12 @@
         }
 
         .shop-content {
-            height: calc(100% - 80px);
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
+            height: auto;
+            display: block;
         }
 
         .shop-section {
-            flex: 1;
-            min-height: 0;
+            margin-bottom: 24px;
         }
 
         .shop-section-header {
@@ -199,12 +197,12 @@
             </div>
 
             <div class="user-info">
-                <span class="point">1,250 P</span>
+                <span id="user-point" class="point">- P</span>
                 <button class="profile-btn">프로필</button>
             </div>
         </div>
     </nav>
-        
+
     <main class="container shop-container">
         <div class="shop-header">
             <div>
@@ -213,134 +211,31 @@
             </div>
         </div>
 
+        <p id="shop-message" role="status"></p>
+
         <div class="shop-content">
-
             <section class="shop-section">
                 <div class="shop-section-header">
-                    <div>
-                        <h2>꾸미기</h2>
-                        <p>나만의 프로필을 꾸며보세요.</p>
-                    </div>
+                    <h2>꾸미기</h2>
+                    <p>나만의 프로필을 꾸며보세요.</p>
                 </div>
-
-                <div class="shop-items">
-
-                    <div class="shop-item">
-                        <div class="shop-item-image">이미지</div>
-                        <div class="shop-item-info">
-                            <h3>프로필</h3>
-                            <p>~~~ 프로필</p>
-                            <div class="shop-item-bottom">
-                                <strong>500 P</strong>
-                                <button class="shop-buy-button">구매</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <div class="shop-item-image">이미지</div>
-                        <div class="shop-item-info">
-                            <h3>프로필</h3>
-                            <p>~~~ 프로필</p>
-                            <div class="shop-item-bottom">
-                                <strong>300 P</strong>
-                                <button class="shop-buy-button">구매</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <div class="shop-item-image">이미지</div>
-                        <div class="shop-item-info">
-                            <h3>칭호</h3>
-                            <p>~~~ 칭호</p>
-                            <div class="shop-item-bottom">
-                                <strong>400 P</strong>
-                                <button class="shop-buy-button">구매</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <div class="shop-item-image">이미지</div>
-                        <div class="shop-item-info">
-                            <h3>칭호</h3>
-                            <p>~~~ 칭호</p>
-                            <div class="shop-item-bottom">
-                                <strong>400 P</strong>
-                                <button class="shop-buy-button">구매</button>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
+                <div id="shop-decorate-grid" class="shop-items"></div>
             </section>
 
             <section class="shop-section">
                 <div class="shop-section-header">
-                    <div>
-                        <h2>플레이</h2>
-                        <p>포인트를 사용해 더 재밌게 플레이하세요.</p>
-                    </div>
+                    <h2>플레이</h2>
+                    <p>플레이에 사용할 아이템을 구매해보세요.</p>
                 </div>
-
-                <div class="shop-items">
-                    <div class="shop-item">
-                        <div class="shop-item-image">아이템</div>
-                        <div class="shop-item-info">
-                            <h3>예측 대상 해금</h3>
-                            <p>더 다양한 날씨를 예측할 수 있습니다.</p>
-                            <div class="shop-item-bottom">
-                                <strong>500 P</strong>
-                                <button class="shop-buy-button">구매</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <div class="shop-item-image">아이템</div>
-                        <div class="shop-item-info">
-                            <h3>지역 해금</h3>
-                            <p>새로운 지역의 날씨를 예측할 수 있습니다.</p>
-                            <div class="shop-item-bottom">
-                                <strong>700 P</strong>
-                                <button class="shop-buy-button">구매</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <div class="shop-item-image">아이템</div>
-                        <div class="shop-item-info">
-                            <h3>연승 보호권</h3>
-                            <p>예측 실패시에도 연승이 유지됩니다.</p>
-                            <div class="shop-item-bottom">
-                                <strong>600 P</strong>
-                                <button class="shop-buy-button">구매</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="shop-item">
-                        <div class="shop-item-image">아이템</div>
-                        <div class="shop-item-info">
-                            <h3>럭키 룰렛</h3>
-                            <p>포인트를 사용해 랜덤 아이템을 획득합니다.</p>
-                            <div class="shop-item-bottom">
-                                <strong>100 P</strong>
-                                <button class="shop-buy-button">플레이</button>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
+                <div id="shop-play-grid" class="shop-items"></div>
             </section>
-
         </div>
     </main>
-    <script type="module">
-        import { loadPoint } from "../js/utils/point.js";
-        loadPoint();
+
+    <script src="./common.js"></script>
+    <script>
+        loadShop();
     </script>
+
 </body>
 </html>

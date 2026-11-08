@@ -332,20 +332,23 @@ async function showRanking(type) {
     if(type === "total") {
         query = "SELECT id, name, point, current_streak, equipped_title, equipped_profile_image FROM user ORDER BY point DESC, current_streak DESC LIMIT 100";
     } else if (type === "weekend") {
-        query = "SELECT * FROM weekly_stat ORDER BY earned_point DESC, success_count DESC LIMIT 100"; // 여기 나중에 칭호나 프사도 가능하게 해줘야 함.
-    } else {
-      return { code: AUTH_RESULT.NOT_VALID };
-    }
+        query = `
+    SELECT weekly_stat.*, user.name, weekly_stat.earned_point AS point, user.equipped_title, user.equipped_profile_image
+    FROM weekly_stat
+    JOIN user ON user.id = weekly_stat.user_id
+    ORDER BY weekly_stat.earned_point DESC, weekly_stat.success_count DESC
+    LIMIT 100
+`; // o
+    } else return { code: AUTH_RESULT.NOT_VALID };
 
     const rows = await db.executeQueryV(query);
+    const row = rows;
 
-    if (rows.length === 0) {
-        return { code: AUTH_RESULT.FAILED };
-    }
+    if(!row) return { code: AUTH_RESULT.FAILED }
 
     return {
         code: AUTH_RESULT.SUCCESS,
-        data: rows
+        data: row
     };
 }
 
@@ -709,6 +712,57 @@ async function showCollection(userId, filterType) {
     }
 }
 
+async function equipItem(userId, type, itemId) {
+    if(!type || !itemId) {
+        return {
+            code: AUTH_RESULT.NOT_VALID,
+            message: "인자값이 누락되었습니다."
+        };
+    }
+
+    let column;
+    if (type === "title") {
+        column = "equipped_title";
+    } else if (type === "profile") {
+        column = "equipped_profile_image";
+        type = "profile_image";
+    }
+
+    const query = `
+        UPDATE user AS u
+        JOIN inventory AS inv ON inv.user_id = u.id
+        JOIN item AS i ON i.id = inv.item_id
+        SET u.${column} = i.value
+        WHERE u.id = ?
+          AND i.id = ?
+          AND i.type = ?
+          AND inv.quantity > 0
+    `;
+
+    try {
+        const result = await db.executeQueryV(query, userId, itemId, type);
+
+        if (result.affectedRows === 0) {
+            return {
+                code: AUTH_RESULT.NOT_VALID,
+                message: "장착할 수 없거나 이미 장착한 아이템입니다."
+            };
+        }
+
+        return {
+            code: AUTH_RESULT.SUCCESS,
+            message: "아이템을 장착했습니다."
+        };
+    } catch (error) {
+        console.log("[ERROR] Failed Equip Item: " + error);
+
+        return {
+            code: AUTH_RESULT.FAILED,
+            message: "아이템을 장착하지 못했습니다."
+        };
+    }
+}
+
 export default {
     doLogin,
     signup,
@@ -723,7 +777,9 @@ export default {
     showRanking,
     createForecast,
     getForecastList,
+    showCollection,
+    equipItem
     getUnsettledForecasts,
     settleForecast, 
-    showCollection
 };
+
