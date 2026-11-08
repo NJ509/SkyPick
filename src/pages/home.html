@@ -67,6 +67,7 @@
             color: #2563eb;
         }
 
+
         .map {
             width: 100%;
             height: 440px;
@@ -75,8 +76,14 @@
             background-color: #eef2f7;
         }
 
+        #map {
+            width: 100%;
+            height: 440px;
+        }
+
         .map-placeholder {
-            height: 100%;
+            width: 100%;
+            height: 400px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -355,7 +362,6 @@
         }
     </style>
 </head>
-
 <body>
 
     <!-- ==================== Navbar ==================== -->
@@ -402,7 +408,7 @@
                             <div class="map-header">
                                 <div>
                                     <span>예측 지역</span>
-                                    <h2>서울</h2>
+                                    <h2 id="mapRegion">서울</h2>
                                 </div>
                                 <button class="region-btn">지역 선택</button>
                             </div>
@@ -410,10 +416,9 @@
 
                             <!-- 나중에 지도 API  -->
                             <div class="map">
-                                <div class="map-placeholder">
-                                    <p>지도 API</p>
-                                </div>
+                                <div id="map"></div>
                             </div>
+                            <script type="module" src="./mapSelect.js"></script>
                         </div>
 
 
@@ -422,39 +427,30 @@
                         <div class="weather-card">
                             <div class="weather-header">
                                 <div>
-                                    <span class="weather-label">현재 날씨</span>
-                                    <h2>서울</h2>
+                                    <span class="weather-label">날씨 예보</span>
+                                    <h2 id="weatherRegion">서울</h2>
                                 </div>
-
-                                <span class="weather-date">2026.09.09</span>
+                                <span class="weather-date" id="weatherDate">조회 중...</span>
                             </div>
-
-
-                            <!-- 날씨 메인 -->
 
                             <div class="weather-main">
-                                <div class="weather-icon">☀️</div>
-                                <div class="temperature">24°</div>
-                                <div class="weather-status">맑음</div>
+                                <div class="weather-icon" id="weatherIcon">🌤️</div>
+                                <div class="temperature" id="temperature">--°</div>
+                                <div class="weather-status" id="weatherStatus">조회 중...</div>
                             </div>
-
-
-                            <!-- 날씨 상세 정보 -->
 
                             <div class="weather-detail">
                                 <div>
                                     <span>강수확률</span>
-                                    <strong>20%</strong>
+                                    <strong id="weatherPop">--%</strong>
                                 </div>
-
                                 <div>
                                     <span>습도</span>
-                                    <strong>55%</strong>
+                                    <strong id="weatherHumidity">--%</strong>
                                 </div>
-
                                 <div>
                                     <span>강수량</span>
-                                    <strong>0mm</strong>
+                                    <strong id="weatherRain">--</strong>
                                 </div>
                             </div>
                         </div>
@@ -488,8 +484,17 @@
                                     <option>인천</option>
                                     <option>경기</option>
                                     <option>강원</option>
-                                    <option>충청</option>
+                                    <option>충북</option>
+                                    <option>충남</option>
                                     <option>대전</option>
+                                    <option>전북</option>
+                                    <option>전남</option>
+                                    <option>광주</option>
+                                    <option>경북</option>
+                                    <option>경남</option>
+                                    <option>대구</option>
+                                    <option>울산</option>
+                                    <option>부산</option>
                                 </select>
                             </div>
 
@@ -506,11 +511,11 @@
                             <!-- 예측 대상 -->
                             <div class="form-group">
                                 <label>예측 대상</label>
-                                <div class="prediction-types">
-                                    <button type="button" class="prediction-type active">날씨</button>
-                                    <button type="button" class="prediction-type">기온</button>
-                                    <button type="button" class="prediction-type">습도</button>
-                                    <button type="button" class="prediction-type">강수량</button>
+                                 <div class="prediction-types">
+                                    <button type="button" class="prediction-type active" data-target="weather">날씨</button>
+                                    <button type="button" class="prediction-type" data-target="temperature">기온</button>
+                                    <button type="button" class="prediction-type" data-target="humidity">습도</button>
+                                    <button type="button" class="prediction-type" data-target="rain">강수량</button>
                                 </div>
                             </div>
 
@@ -520,19 +525,15 @@
 
                             <div class="form-group">
                                 <label for="prediction-value">내 예측</label>
-
-                                <select
-                                    id="prediction-value"
-                                    class="form-select"
-                                >
-                                    <option>맑음</option>
-                                    <option>비</option>
-                                    <option>흐림</option>
-                                    <option>눈</option>
-                                    <option>우박</option>
-
-                                </select>
-
+                                <div id="prediction-value-container">
+                                    <select id="prediction-value" class="form-select">
+                                        <option value="맑음">맑음</option>
+                                        <option value="비">비</option>
+                                        <option value="흐림">흐림</option>
+                                        <option value="눈">눈</option>
+                                        <option value="우박">우박</option>
+                                    </select>
+                                </div>
                             </div>
 
 
@@ -543,7 +544,7 @@
 
                                 <div class="betting-header">
                                     <label for="betting">배팅 포인트</label>
-                                    <strong>0 P</strong>
+                                    <strong><span id="bettingValue">0</span> P</strong>
                                 </div>
 
 
@@ -553,6 +554,7 @@
                                     class="form-range"
                                     min="0"
                                     max="1000"
+                                    step="10"
                                     value="0"
                                 >
 
@@ -571,9 +573,8 @@
 
                                 <div>
                                     <span>예측 성공 시</span>
-                                    <strong>+100 P</strong>
+                                    <strong id="successReward">+100 P</strong>
                                 </div>
-
                                 <p>포인트를 걸지 않은 예측의 기본 보상입니다.</p>
 
                             </div>
@@ -586,5 +587,10 @@
             </div>
         </section>
     </main>
+    <script type="module" src="./prediction.js"></script>
+    <script type="module">
+        import { loadPoint } from "../js/utils/point.js";
+        loadPoint();
+    </script>
 </body>
 </html>
