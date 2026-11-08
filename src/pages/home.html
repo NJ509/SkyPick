@@ -379,7 +379,7 @@
             </div>
 
             <div class="user-info">
-                <span class="point">1,250 P</span>
+                <span id="user-point" class="point">- P</span>
                 <button class="profile-btn">프로필</button>
             </div>
         </div>
@@ -587,8 +587,8 @@
         </section>
     </main>
     <script type="module" src="./prediction.js"></script>
-    <script type="module">
-        import { loadPoint } from "../js/utils/point.js";
+    <script src="./common.js"></script>
+    <script>
         loadPoint();
     </script>
 </body>

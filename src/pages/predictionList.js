@@ -147,7 +147,7 @@ function renderPredictionList() {
 async function loadPredictionList() {
     try {
         const response = await fetch(
-            "http://localhost:3000/api/predictionController",
+            "/api/predictionController",
             {
                 method: "GET",
                 credentials: "include"
