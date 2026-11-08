@@ -204,6 +204,33 @@
                 grid-template-columns: 1fr 1fr;
             }
         }
+        .collection-equip-button {
+            width: 100%;
+            margin-top: 10px;
+            padding: 7px 0;
+            border: 1px solid #2563eb;
+            border-radius: 7px;
+            background: #eff6ff;
+            color: #2563eb;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .collection-equip-button:hover {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .collection-equip-button:active {
+            transform: scale(0.97);
+        }
+
+        .collection-equip-button:focus-visible {
+            outline: 2px solid #93c5fd;
+            outline-offset: 2px;
+        }
     </style>
 </head>
 <body>
@@ -279,6 +306,5 @@
     loadCollection("all");
     loadPoint();
 </script>
-
 </body>
 </html>

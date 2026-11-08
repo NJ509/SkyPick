@@ -242,6 +242,7 @@ async function loadCollection(type) {
 
                 equipHtml = `
                     <button type="button"
+                        class="collection-equip-button"
                         onclick="equipCollectionItem('${equipType}', ${item.id})">
                         장착
                     </button>
