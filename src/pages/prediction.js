@@ -15,7 +15,6 @@ document.querySelectorAll(".prediction-type").forEach(function (button) {
                     <option value="비">비</option>
                     <option value="흐림">흐림</option>
                     <option value="눈">눈</option>
-                    <option value="우박">우박</option>
                 </select>`;
 
         } else if (target === "temperature") {

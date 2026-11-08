@@ -10,6 +10,7 @@ import shopApi from "./js/api/shop.js";
 import weatherApi from "./js/api/weather.js";
 import predictionApi from "./js/api/predictionController.js";
 import collectionApi from "./js/api/collection.js";
+import { settleDueForecasts } from "./js/utils/forecastSettlement.js";
 
 const result = dotenv.config({path: new URL('../.env', import.meta.url)});
 const allowedOrigins = new Set(
@@ -264,4 +265,27 @@ const server = http
   .listen(3000, () => {
     console.log("Server running at http://localhost:3000/");
   });
+// 자동 정산 실행
+let isSettling = false;
+
+async function runSettlement() {
+    // 이전 정산이 아직 진행 중이면 중복 실행 방지
+    if (isSettling) return;
+
+    isSettling = true;
+
+    try {
+        await settleDueForecasts();
+    } catch (error) {
+        console.error("[정산 실행 오류]", error);
+    } finally {
+        isSettling = false;
+    }
+}
+
+// 서버 시작 후 정산 실행
+runSettlement();
+
+// 1분마다 정산 대상 확인
+setInterval(runSettlement, 60 * 1000);
 

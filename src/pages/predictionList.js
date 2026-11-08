@@ -56,10 +56,10 @@ function calculateReward(forecast) {
     const betting = Number(forecast.used_point);
 
     if (forecast.beting_type === "역배") {
-        return 100 + Math.floor(betting * 0.5);
+        return betting + 100 + Math.floor(betting * 0.5);
     }
 
-    return 100 + Math.floor(betting * 0.15);
+    return betting + 100 + Math.floor(betting * 0.15);
 }
 
 // 예측 목록 출력

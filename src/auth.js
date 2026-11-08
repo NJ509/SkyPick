@@ -601,7 +601,81 @@ async function getForecastList(userId) {
 }
 
 
-// ---
+// 정산 대상 예측 조회
+async function getUnsettledForecasts() {
+    const query = `
+        SELECT
+            id,
+            user_id,
+            forecast_map,
+            forecast_time,
+            forecast_type,
+            predicted_value,
+            used_point,
+            beting_type
+        FROM forecast
+        WHERE COALESCE(is_settled, 0) = 0
+          AND forecast_time <= NOW()
+        ORDER BY forecast_time ASC
+    `;
+
+    return await db.executeQueryV(query);
+}
+
+// 예측 정산 처리
+async function settleForecast(forecastId, isCorrect, reward) {
+    const connection = await db.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        // 정산 대상 잠금
+        const [rows] = await connection.execute(
+            `SELECT id, user_id, is_settled
+             FROM forecast
+             WHERE id = ?
+             FOR UPDATE`,
+            [forecastId]
+        );
+
+        if (rows.length === 0 || rows[0].is_settled) {
+            await connection.rollback();
+            return false;
+        }
+
+        // 정답이면 포인트 지급
+        if (isCorrect) {
+            const [result] = await connection.execute(
+                `UPDATE user
+                SET point = point + ?
+                WHERE id = ?`,
+                [reward, rows[0].user_id]
+            );
+
+            if (result.affectedRows !== 1) {
+                throw new Error("포인트를 지급할 사용자를 찾을 수 없습니다.");
+            }
+        }
+
+        // 정산 결과 저장
+        await connection.execute(
+            `UPDATE forecast
+             SET is_correct = ?, is_settled = 1
+             WHERE id = ?`,
+            [isCorrect ? 1 : 0, forecastId]
+        );
+
+        await connection.commit();
+        return true;
+
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+
+    } finally {
+        connection.release();
+    }
+}
 
 
 async function showCollection(userId, filterType) {
@@ -705,5 +779,7 @@ export default {
     getForecastList,
     showCollection,
     equipItem
+    getUnsettledForecasts,
+    settleForecast, 
 };
 
