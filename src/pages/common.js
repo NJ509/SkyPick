@@ -231,6 +231,23 @@ async function loadCollection(type) {
                 `;
             }
 
+            let equipHtml = "";
+
+            if (isHave && (item.type === "title" || item.type === "profile_image")) {
+                let equipType = "title";
+
+                if (item.type === "profile_image") {
+                    equipType = "profile";
+                }
+
+                equipHtml = `
+                    <button type="button"
+                        onclick="equipCollectionItem('${equipType}', ${item.id})">
+                        장착
+                    </button>
+                    `;
+            }
+
             const grid = document.getElementById("collection-" + groups[groupIndex] + "-grid");
 
             grid.innerHTML += `
@@ -238,6 +255,7 @@ async function loadCollection(type) {
                     ${imageHtml}
                     <h3>${item.name}</h3>
                     <span class="collection-state">${stateText}</span> 
+                    ${equipHtml}
                 </div>
             `;
         }
@@ -358,5 +376,19 @@ async function buyShopItem(itemId) {
     } finally {
         button.disabled = false;
         button.textContent = "구매";
+    }
+}
+
+async function equipCollectionItem(type, itemId) {
+    try {
+        const response = await fetch(
+            "/equip?type=" + type + "&itemId=" + itemId,
+            { credentials: "include" }
+        );
+
+        const result = await response.json();
+        // console.log(result);
+    } catch (error) {
+        console.log("[FETCH ERROR]" +error);
     }
 }

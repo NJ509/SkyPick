@@ -45,7 +45,7 @@ async function login(req, res) {
           break;
       }
 
-      return res;
+      default: return res;
   }
 }
 
@@ -96,4 +96,46 @@ async function showPoint(req, res) {
   }
 }
 
-export default { login, signup, showPoint };
+async function equipItem(req, res, type, itemId) {
+    const types = ["title", "profile"];
+
+    if (!session.getSession(req)?.userId) {
+        return res.writeHead(401).end(JSON.stringify({
+            message: "로그인이 필요한 작업입니다."
+        }));
+    }
+
+    if (!types.includes(type) || !itemId) {
+        return res.writeHead(400).end(JSON.stringify({
+            message: "아이템 종류 또는 아이템 ID가 잘못되었습니다."
+        }));
+    }
+
+    const userId = session.getSession(req).userId;
+    const result = await auth.equipItem(userId, type, itemId);
+
+    switch (result.code) {
+        case "NOT_VALID": {
+            return res.writeHead(400).end(JSON.stringify({
+                message: result.message
+            }));
+        }
+        case "FAILED": {
+            return res.writeHead(500).end(JSON.stringify({
+                message: result.message
+            }));
+        }
+        case "SUCCESS": {
+            return res.writeHead(200).end(JSON.stringify({
+                message: result.message
+            }));
+        }
+        default: {
+            return res.writeHead(500).end(JSON.stringify({
+                message: "아이템을 장착하지 못했습니다."
+            }));
+        }
+    }
+}
+
+export default { login, signup, showPoint, equipItem };
