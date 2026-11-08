@@ -778,7 +778,7 @@ export default {
     createForecast,
     getForecastList,
     showCollection,
-    equipItem
+    equipItem,
     getUnsettledForecasts,
     settleForecast, 
 };
