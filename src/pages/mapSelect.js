@@ -1,8 +1,3 @@
-const KAKAO_MAP_KEY = import.meta.env.VITE_KAKAO_MAP_API_KEY;
-
-const script = document.createElement("script");
-script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_MAP_KEY}&autoload=false`;
-
 // 지역별 대표 역
 const stations = [
     { name: "서울역", region: "서울", lat: 37.55406888733184, lon: 126.97070335253385, nx: 61, ny: 127 },
@@ -72,150 +67,183 @@ function findNearestStation(latitude, longitude) {
         distance: shortestDistance
     };
 }
+// 카카오맵 API 키를 서버에서 가져온 후 지도 실행
+async function loadKakaoMap() {
+    try {
+        // 서버에서 카카오맵 API 키 가져오기
+        const configResponse = await fetch("/api/config");
 
-script.onload = () => {
-    kakao.maps.load(() => {
-        const container = document.getElementById("map");
-
-        if (!container) {
-            console.error("지도 요소를 찾을 수 없습니다.");
-            return;
+        if (!configResponse.ok) {
+            throw new Error("카카오맵 설정을 가져오지 못했습니다.");
         }
 
-        const options = {
-            center: new kakao.maps.LatLng(36.0593, 127.88934),
-            level: 12
+        const config = await configResponse.json();
+        const KAKAO_MAP_KEY = config.kakaoMapApiKey;
+
+        if (!KAKAO_MAP_KEY) {
+            throw new Error("카카오맵 API 키가 설정되지 않았습니다.");
+        }
+
+        // 카카오맵 SDK 불러오기
+        const script = document.createElement("script");
+
+        script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_MAP_KEY}&autoload=false`;
+
+        script.onload = () => {
+            kakao.maps.load(() => {
+                const container = document.getElementById("map");
+
+                if (!container) {
+                    console.error("지도 요소를 찾을 수 없습니다.");
+                    return;
+                }
+
+                const options = {
+                    center: new kakao.maps.LatLng(36.0593, 127.88934),
+                    level: 12
+                };
+
+                const map = new kakao.maps.Map(container, options);
+                const marker = new kakao.maps.Marker();
+
+                // 지도 클릭 이벤트
+                kakao.maps.event.addListener(map, "click", async function(mouseEvent) {
+                    const latlng = mouseEvent.latLng;
+                    const latitude = latlng.getLat();
+                    const longitude = latlng.getLng();
+
+                    // 가장 가까운 역 찾기
+                    const station = findNearestStation(latitude, longitude);
+
+                    selectedRegion = station.region;
+
+                    console.log("선택된 지역:", station.region);
+                    console.log("선택된 역:", station.name);
+
+                    // 지도 위 지역명 변경
+                    const mapRegion = document.getElementById("mapRegion");
+                    if (mapRegion) {
+                        mapRegion.textContent = station.region;
+                    }
+
+                    // 예측 지역 선택 상자 변경
+                    const regionSelect = document.getElementById("region");
+                    if (regionSelect) {
+                        regionSelect.value = station.region;
+                    }
+
+                    // 현재 날씨 영역의 지역명 변경
+                    const weatherRegion = document.getElementById("weatherRegion");
+                    if (weatherRegion) {
+                        weatherRegion.textContent = station.region;
+                    }
+
+                    // 마커를 선택된 역 위치에 표시
+                    marker.setPosition(
+                        new kakao.maps.LatLng(station.lat, station.lon)
+                    );
+                    marker.setMap(map);
+
+                    if (document.getElementById("weatherStatus")) {
+                        await loadWeather(station);
+                    }
+                });
+
+                // 예측 지역을 선택하면 지도 마커 이동
+                const regionSelect = document.getElementById("region");
+
+                if (regionSelect) {
+                    regionSelect.addEventListener("change", function () {
+                        const selectedRegion = regionSelect.value;
+
+                        for (let i = 0; i < stations.length; i++) {
+                            const station = stations[i];
+
+                            if (station.region === selectedRegion) {
+                                const position = new kakao.maps.LatLng(
+                                    station.lat,
+                                    station.lon
+                                );
+
+                                // 마커 이동
+                                marker.setPosition(position);
+                                marker.setMap(map);
+
+                                // 지도의 중심도 해당 위치로 이동
+                                map.setCenter(position);
+
+                                // 지도 위 지역 이름 변경
+                                const mapRegion = document.getElementById("mapRegion");
+                                if (mapRegion) {
+                                    mapRegion.textContent = station.region;
+                                }
+
+                                // 현재 날씨 영역의 지역 이름 변경
+                                const weatherRegion = document.getElementById("weatherRegion");
+                                if (weatherRegion) {
+                                    weatherRegion.textContent = station.region;
+                                }
+
+                                console.log("선택된 지역:", station.region);
+                                console.log("선택된 역:", station.name);
+                                loadWeather(station);
+                                break;
+                            }
+                        }
+                    });
+                }
+                
+                // 최초 페이지 로딩 시 기본 지역 날씨 조회
+                const initialRegion = regionSelect.value || "서울";
+
+                const initialStation =
+                    stations.find(station => station.region === initialRegion)
+                    || stations[0];
+
+                // 기본 지역 선택값 설정
+                if (regionSelect) {
+                    regionSelect.value = initialStation.region;
+                }
+
+                // 지도 위 지역명 표시
+                const mapRegion = document.getElementById("mapRegion");
+                if (mapRegion) {
+                    mapRegion.textContent = initialStation.region;
+                }
+
+                // 현재 날씨 영역 지역명 표시
+                const weatherRegion = document.getElementById("weatherRegion");
+                if (weatherRegion) {
+                    weatherRegion.textContent = initialStation.region;
+                }
+
+                // 기본 지역 위치에 마커 표시
+                const initialPosition = new kakao.maps.LatLng(
+                    initialStation.lat,
+                    initialStation.lon
+                );
+
+                marker.setPosition(initialPosition);
+                marker.setMap(map);
+                map.setCenter(initialPosition);
+
+                // 기본 지역 날씨 조회
+                loadWeather(initialStation);
+            });
         };
 
-        const map = new kakao.maps.Map(container, options);
-        const marker = new kakao.maps.Marker();
+        script.onerror = () => {
+            console.error("카카오맵 SDK를 불러오지 못했습니다.");
+        };
 
-        // 지도 클릭 이벤트
-        kakao.maps.event.addListener(map, "click", async function(mouseEvent) {
-            const latlng = mouseEvent.latLng;
-            const latitude = latlng.getLat();
-            const longitude = latlng.getLng();
+        document.head.appendChild(script);
 
-            // 가장 가까운 역 찾기
-            const station = findNearestStation(latitude, longitude);
+    } catch (error) {
+        console.error("카카오맵 초기화 실패:", error);
+    }
+}
 
-            selectedRegion = station.region;
-
-            console.log("선택된 지역:", station.region);
-            console.log("선택된 역:", station.name);
-
-            // 지도 위 지역명 변경
-            const mapRegion = document.getElementById("mapRegion");
-            if (mapRegion) {
-                mapRegion.textContent = station.region;
-            }
-
-            // 예측 지역 선택 상자 변경
-            const regionSelect = document.getElementById("region");
-            if (regionSelect) {
-                regionSelect.value = station.region;
-            }
-
-            // 현재 날씨 영역의 지역명 변경
-            const weatherRegion = document.getElementById("weatherRegion");
-            if (weatherRegion) {
-                weatherRegion.textContent = station.region;
-            }
-
-            // 마커를 선택된 역 위치에 표시
-            marker.setPosition(
-                new kakao.maps.LatLng(station.lat, station.lon)
-            );
-            marker.setMap(map);
-
-            if (document.getElementById("weatherStatus")) {
-                await loadWeather(station);
-            }
-        });
-
-        // 예측 지역을 선택하면 지도 마커 이동
-        const regionSelect = document.getElementById("region");
-
-        if (regionSelect) {
-            regionSelect.addEventListener("change", function () {
-                const selectedRegion = regionSelect.value;
-
-                for (let i = 0; i < stations.length; i++) {
-                    const station = stations[i];
-
-                    if (station.region === selectedRegion) {
-                        const position = new kakao.maps.LatLng(
-                            station.lat,
-                            station.lon
-                        );
-
-                        // 마커 이동
-                        marker.setPosition(position);
-                        marker.setMap(map);
-
-                        // 지도의 중심도 해당 위치로 이동
-                        map.setCenter(position);
-
-                        // 지도 위 지역 이름 변경
-                        const mapRegion = document.getElementById("mapRegion");
-                        if (mapRegion) {
-                            mapRegion.textContent = station.region;
-                        }
-
-                        // 현재 날씨 영역의 지역 이름 변경
-                        const weatherRegion = document.getElementById("weatherRegion");
-                        if (weatherRegion) {
-                            weatherRegion.textContent = station.region;
-                        }
-
-                        console.log("선택된 지역:", station.region);
-                        console.log("선택된 역:", station.name);
-                        loadWeather(station);
-                        break;
-                    }
-                }
-            });
-        }
-        
-        // 최초 페이지 로딩 시 기본 지역 날씨 조회
-        const initialRegion = regionSelect.value || "서울";
-
-        const initialStation =
-            stations.find(station => station.region === initialRegion)
-            || stations[0];
-
-        // 기본 지역 선택값 설정
-        if (regionSelect) {
-            regionSelect.value = initialStation.region;
-        }
-
-        // 지도 위 지역명 표시
-        const mapRegion = document.getElementById("mapRegion");
-        if (mapRegion) {
-            mapRegion.textContent = initialStation.region;
-        }
-
-        // 현재 날씨 영역 지역명 표시
-        const weatherRegion = document.getElementById("weatherRegion");
-        if (weatherRegion) {
-            weatherRegion.textContent = initialStation.region;
-        }
-
-        // 기본 지역 위치에 마커 표시
-        const initialPosition = new kakao.maps.LatLng(
-            initialStation.lat,
-            initialStation.lon
-        );
-
-        marker.setPosition(initialPosition);
-        marker.setMap(map);
-        map.setCenter(initialPosition);
-
-        // 기본 지역 날씨 조회
-        loadWeather(initialStation);
-    });
-};
-
+loadKakaoMap();
 
 // 기상청 단기예보 발표 시각 구하기
 function getBaseDateTime() {
@@ -396,9 +424,6 @@ async function loadWeather(station) {
         weatherStatus.textContent = "날씨를 불러오지 못했습니다.";
     }
 }
-
-document.head.appendChild(script);
-
 
 //예측 시간 
 const predictionTime = document.getElementById("prediction-time");
