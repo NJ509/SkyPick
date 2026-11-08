@@ -47,7 +47,7 @@ CREATE TABLE forecast(
     submitted_at TIMESTAMP NOT NULL, -- 유저가 예측 버튼 누른 시점 (쿨타임 계산용)
     forecast_map VARCHAR(7) NOT NULL,
     forecast_time DATETIME NOT NULL,
-    forecast_type VARCHAR(10) NOT NULL, -- 예측 종류 (기온, 강수량, 습도 등)
+    forecast_type VARCHAR(11) NOT NULL, -- 예측 종류 (기온, 강수량, 습도 등)
     predicted_value VARCHAR(10) NOT NULL, -- 예측 값
     used_point INTEGER NOT NULL DEFAULT 0,
     beting_type VARCHAR(10) NOT NULL, -- 배팅 종류 (역/정배)

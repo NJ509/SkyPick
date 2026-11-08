@@ -264,6 +264,7 @@ const server = http
   })
   .listen(3000, () => {
     console.log("Server running at http://localhost:3000/");
+    console.log("Home: http://localhost:3000/home.html");
   });
 // 자동 정산 실행
 let isSettling = false;
