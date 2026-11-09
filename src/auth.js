@@ -910,7 +910,17 @@ async function settleForecast(forecastId, isCorrect, reward) {
             [pointReward, nextStreak, userId]
         );
 
-        // 4. 정산 결과 저장
+        // 4. 주간 랭킹 통계 누적
+        await connection.execute(
+            `INSERT INTO weekly_stat (user_id, success_count, earned_point)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                success_count = success_count + VALUES(success_count),
+                earned_point = earned_point + VALUES(earned_point)`,
+            [userId, isCorrect ? 1 : 0, pointReward]
+        );
+
+        // 5. 정산 결과 저장
         await connection.execute(
             `UPDATE forecast
              SET is_correct = ?, is_settled = 1

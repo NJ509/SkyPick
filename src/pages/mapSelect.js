@@ -580,6 +580,7 @@ if (completeButton) {
             }
 
             // 회원가입 성공 후 자동 로그인
+            const parsedSignupData = JSON.parse(signupData);
             const loginResponse = await fetch("http://localhost:3000/login", {
                 method: "POST",
                 headers: {
@@ -587,8 +588,8 @@ if (completeButton) {
                 },
                 credentials: "include",
                 body: JSON.stringify({
-                    id: signupData.id,
-                    password: signupData.password
+                    id: parsedSignupData.id,
+                    password: parsedSignupData.password
                 })
             });
 
