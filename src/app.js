@@ -201,12 +201,12 @@ const server = http
                     return await weatherApi.showWeather(request, response, queryParams);
                 }
                 if (requestUrl === "/api/predictionController") {
-                  return await predictionApi.showPredictionList(
-                      request,
-                      response,
-                      queryParams
-                  );
-              }
+                    return await predictionApi.showPredictionList(
+                        request,
+                        response,
+                        queryParams
+                    );
+                }
                 if(requestUrl === "/collection") {
                     return await collectionApi.showCollection(request, response, queryParams.get("type"));
                 }
@@ -215,6 +215,9 @@ const server = http
                 }
                 if(requestUrl === "/equip") {
                     return await userApi.equipItem(request, response, queryParams.get("type"), queryParams.get("item_id"));
+                }
+                if (requestUrl === "/map/list") {
+                    return await shopApi.getUserMaps(request, response);
                 }
 
                 return sendPage(requestUrl, response); // 페이지 ㅂㅂ여주기 (/ranking.html → ./src/pages/ranking.html)
@@ -252,6 +255,9 @@ const server = http
                 }
                 if (requestUrl === "/api/predictionController") {
                     return await predictionApi.createPrediction(request, response);
+                }
+                if (requestUrl === "/map/unlock") {
+                    return await shopApi.unlockMap(request, response);
                 }
 
 

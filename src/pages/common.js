@@ -372,6 +372,23 @@ async function buyShopItem(itemId) {
 
         quantityElement.textContent = "보유 " + purchase.quantity + "개";
         await loadPoint();
+
+        // 지역 해금 아이템이면 지역 선택 화면으로 이동
+        const shopItems = await fetch("/shop", {
+            credentials: "include"
+        }).then(response => response.json());
+
+        const purchasedItem = shopItems.data.find(
+            item => Number(item.id) === Number(itemId)
+        );
+
+        if (purchasedItem?.value === "region_unlock") {
+            alert("지역 해금 아이템을 구매했습니다. 해금할 지역을 선택해 주세요.");
+            window.location.href = "mapSelect.html?mode=unlock";
+            return;
+        }
+
+        alert("구매 성공");
     } catch (error) {
         console.log(error);
     } finally {

@@ -490,6 +490,160 @@ async function buyItem(userId, itemId) {
     }
 }
 
+// 지역 해금
+async function unlockMap(userId, selectedMap) {
+    const connection = await db.getConnection();
+    let transactionStarted = false;
+
+    try {
+        await connection.beginTransaction();
+        transactionStarted = true;
+
+        // 사용자 행 잠금
+        const users = await db.executeQueryForTransaction(
+            connection,
+            "SELECT id FROM user WHERE id = ? FOR UPDATE",
+            userId
+        );
+
+        if (!users[0]) {
+            throw new Error("USER_NOT_FOUND");
+        }
+
+        // 지역 유효성 검사
+        const mapList = [
+            "서울", "인천", "경기", "강원", "충북",
+            "충남", "대전", "전북", "전남", "광주",
+            "경북", "경남", "대구", "울산", "부산"
+        ];
+
+        if (!mapList.includes(selectedMap)) {
+            throw new Error("INVALID_MAP");
+        }
+
+        // 이미 해금한 지역인지 확인
+        const [existingMap] = await db.executeQueryForTransaction(
+            connection,
+            "SELECT map FROM map WHERE user_id = ? AND map = ?",
+            userId,
+            selectedMap
+        );
+
+        if (existingMap) {
+            await connection.rollback();
+            transactionStarted = false;
+
+            return {
+                code: AUTH_RESULT.NOT_VALID,
+                message: "이미 해금한 지역입니다."
+            };
+        }
+
+        // 지역 해금 아이템 ID 조회
+        const items = await db.executeQueryForTransaction(
+            connection,
+            "SELECT id FROM item WHERE value = ? AND type = ?",
+            "region_unlock",
+            "usage_item"
+        );
+
+        if (!items[0]) {
+            throw new Error("REGION_UNLOCK_ITEM_NOT_FOUND");
+        }
+
+        const itemId = items[0].id;
+
+        // 아이템 수량 확인 및 잠금
+        const [inventory] = await db.executeQueryForTransaction(
+            connection,
+            "SELECT quantity FROM inventory WHERE user_id = ? AND item_id = ? FOR UPDATE",
+            userId,
+            itemId
+        );
+
+        if (!inventory || Number(inventory.quantity) <= 0) {
+            await connection.rollback();
+            transactionStarted = false;
+
+            return {
+                code: AUTH_RESULT.NOT_VALID,
+                message: "지역 해금 아이템이 부족합니다."
+            };
+        }
+
+        // 아이템 1개 차감
+        const itemUpdate = await db.executeQueryForTransaction(
+            connection,
+            "UPDATE inventory SET quantity = quantity - 1 WHERE user_id = ? AND item_id = ? AND quantity > 0",
+            userId,
+            itemId
+        );
+
+        if (itemUpdate.affectedRows !== 1) {
+            throw new Error("ITEM_CONSUME_FAILED");
+        }
+
+        // 지역 추가
+        const mapResult = await newMap(userId, selectedMap, connection);
+
+        if (mapResult.code !== AUTH_RESULT.SUCCESS) {
+            throw new Error("MAP_INSERT_FAILED");
+        }
+
+        await connection.commit();
+        transactionStarted = false;
+
+        return {
+            code: AUTH_RESULT.SUCCESS,
+            message: "지역 해금 성공",
+            data: {
+                map: selectedMap,
+                quantity: Number(inventory.quantity) - 1
+            }
+        };
+
+    } catch (e) {
+        if (transactionStarted) {
+            await connection.rollback();
+            transactionStarted = false;
+        }
+
+        console.log("[ERROR] Failed Unlock Map:", e);
+
+        return {
+            code: AUTH_RESULT.FAILED,
+            message: "지역 해금 실패"
+        };
+
+    } finally {
+        connection.release();
+    }
+}
+
+// 사용자의 해금 지역 조회
+async function getUserMaps(userId) {
+    const query = `
+        SELECT map
+        FROM map
+        WHERE user_id = ?
+    `;
+
+    return await db.executeQueryV(query, userId);
+}
+
+// 사용자의 지역 해금 여부 확인
+async function isMapUnlocked(userId, map) {
+    const query = `
+        SELECT id
+        FROM map
+        WHERE user_id = ?
+          AND map = ?
+        LIMIT 1
+    `;
+
+    const result = await db.executeQueryV(query, userId, map);
+    return result.length > 0;
+}
 /**
  * 예측 데이터 등록 및 포인트 차감
  */
@@ -858,5 +1012,8 @@ export default {
     equipItem,
     getUnsettledForecasts,
     settleForecast, 
+    unlockMap,
+    getUserMaps,
+    isMapUnlocked,
 };
 

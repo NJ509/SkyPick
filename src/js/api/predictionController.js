@@ -95,6 +95,20 @@ async function createPrediction(request, response) {
             }));
         }
 
+
+        // 지역 해금 여부 확인
+        const isUnlocked = await auth.isMapUnlocked(userSession.userId, forecast_map);
+
+        if (!isUnlocked) {
+            response.writeHead(403, {
+                "Content-Type": "application/json"
+            });
+
+            return response.end(JSON.stringify({
+                message: "해금하지 않은 지역입니다."
+            }));
+        }
+
         // 4. 세션의 사용자 ID로 예측 등록
         const result = await auth.createForecast(
             userSession.userId,
