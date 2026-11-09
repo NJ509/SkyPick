@@ -10,6 +10,7 @@ import shopApi from "./js/api/shop.js";
 import weatherApi from "./js/api/weather.js";
 import predictionApi from "./js/api/predictionController.js";
 import collectionApi from "./js/api/collection.js";
+import damagochiApi from "./js/api/damagochi.js";
 import { settleDueForecasts } from "./js/utils/forecastSettlement.js";
 
 const result = dotenv.config({path: new URL('../.env', import.meta.url)});
@@ -210,6 +211,9 @@ const server = http
                 if(requestUrl === "/collection") {
                     return await collectionApi.showCollection(request, response, queryParams.get("type"));
                 }
+                if(requestUrl === "/damagochi") {
+                    return await damagochiApi.showDamagochi(request, response);
+                }
                 if(requestUrl === "/point") {
                     return await userApi.showPoint(request, response);
                 }
@@ -249,6 +253,15 @@ const server = http
                 }
                 if (requestUrl === "/shop") {
                     return await shopApi.buyItem(request, response);
+                }
+                if (requestUrl === "/damagochi") {
+                    return await damagochiApi.newDamagochi(request, response);
+                }
+                if (requestUrl === "/damagochi/exp") {
+                    return await damagochiApi.eatExp(request, response);
+                }
+                if (requestUrl === "/damagochi/name") {
+                    return await damagochiApi.changeName(request, response);
                 }
                 if (requestUrl === "/api/predictionController") {
                     return await predictionApi.createPrediction(request, response);
