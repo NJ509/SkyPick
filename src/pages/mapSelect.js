@@ -17,6 +17,30 @@ const stations = [
     { name: "부산역", region: "부산", lat: 35.11520340622514, lon: 129.04154985192403, nx: 98, ny: 75 }
 ];
 let selectedRegion = null;
+let unlockedMaps = [];
+async function loadUnlockedMaps() {
+    try {
+        const response = await fetch("/map/list", {
+            credentials: "include"
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message);
+        }
+
+        unlockedMaps = result.data;
+
+    } catch (error) {
+        console.error("해금 지역 조회 실패:", error);
+        alert("지역 목록을 불러오지 못했습니다.");
+    }
+}
+
+
+const urlParams = new URLSearchParams(window.location.search);
+const pageMode = urlParams.get("mode") || "signup";
 
 // 두 위치 사이의 거리 계산
 function getDistance(lat1, lon1, lat2, lon2) {
@@ -115,6 +139,14 @@ async function loadKakaoMap() {
                     // 가장 가까운 역 찾기
                     const station = findNearestStation(latitude, longitude);
 
+                    // 지역 해금 모드에서는 이미 해금한 지역 선택 방지
+                    if (
+                        pageMode === "unlock" &&
+                        unlockedMaps.includes(station.region)
+                    ) {
+                        alert("이미 해금한 지역입니다.");
+                        return;
+                    }
                     selectedRegion = station.region;
 
                     console.log("선택된 지역:", station.region);
@@ -196,9 +228,22 @@ async function loadKakaoMap() {
                 // 최초 페이지 로딩 시 기본 지역 날씨 조회
                 const initialRegion = regionSelect.value || "서울";
 
-                const initialStation =
-                    stations.find(station => station.region === initialRegion)
-                    || stations[0];
+                let initialStation;
+
+                if (pageMode === "unlock") {
+                    initialStation = stations.find(
+                        station => !unlockedMaps.includes(station.region)
+                    );
+                } else {
+                    initialStation =
+                        stations.find(station => station.region === initialRegion)
+                        || stations[0];
+                }
+                if (!initialStation) {
+                    alert("해금할 수 있는 지역이 없습니다.");
+                    return;
+                }
+                selectedRegion = initialStation.region;
 
                 // 기본 지역 선택값 설정
                 if (regionSelect) {
@@ -243,7 +288,15 @@ async function loadKakaoMap() {
     }
 }
 
-loadKakaoMap();
+async function initializeMap() {
+    if (pageMode === "unlock") {
+        await loadUnlockedMaps();
+    }
+
+    await loadKakaoMap();
+}
+
+initializeMap();
 
 // 기상청 단기예보 발표 시각 구하기
 function getBaseDateTime() {
@@ -463,35 +516,66 @@ const completeButton = document.getElementById("complete-button");
 if (completeButton) {
     completeButton.addEventListener("click", async () => {
         if (!selectedRegion) {
-            alert("지역을 먼저 선택해주세요.");
+            alert("지역을 먼저 선택해 주세요.");
             return;
         }
 
-        const signupData = JSON.parse(sessionStorage.getItem("signupData"));
+        // 지역 해금 모드   
+        if (pageMode === "unlock") {
+            try {
+                const response = await fetch("/map/unlock", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        map: selectedRegion
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    alert(result.message || "지역 해금에 실패했습니다.");
+                    return;
+                }
+
+                alert(`${selectedRegion} 지역 해금 완료!`);
+                window.location.href = "home.html";
+
+            } catch (error) {
+                console.error("지역 해금 실패:", error);
+                alert("서버와 통신할 수 없습니다.");
+            }
+
+            return;
+        }
+
+        // 기존 회원가입 모드
+        const signupData = sessionStorage.getItem("signupData");
 
         if (!signupData) {
-            alert("회원가입 정보가 없습니다.");
-            location.href = "./signup.html";
+            window.location.href = "signup.html";
             return;
         }
 
         try {
-            // 회원가입 요청
-            const signupResponse = await fetch("http://localhost:3000/signup", {
+            const response = await fetch("http://localhost:3000/signup", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    ...signupData,
+                    ...JSON.parse(signupData),
                     map: selectedRegion
                 })
             });
 
-            const signupResult = await signupResponse.json();
+            const result = await response.json();
 
-            if (!signupResponse.ok) {
-                alert(signupResult.message || "회원가입에 실패했습니다.");
+            if (!response.ok) {
+                alert(result.message || "회원가입에 실패했습니다.");
                 return;
             }
 
@@ -522,8 +606,8 @@ if (completeButton) {
             location.href = "./home.html";
 
         } catch (error) {
-            console.error("회원가입 오류:", error);
-            alert("서버와 연결할 수 없습니다.");
+            console.error("회원가입 실패:", error);
+            alert("서버와 통신할 수 없습니다.");
         }
-    }
-);}
+    });
+}

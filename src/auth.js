@@ -513,6 +513,160 @@ async function buyItem(userId, itemId) {
     }
 }
 
+// 지역 해금
+async function unlockMap(userId, selectedMap) {
+    const connection = await db.getConnection();
+    let transactionStarted = false;
+
+    try {
+        await connection.beginTransaction();
+        transactionStarted = true;
+
+        // 사용자 행 잠금
+        const users = await db.executeQueryForTransaction(
+            connection,
+            "SELECT id FROM user WHERE id = ? FOR UPDATE",
+            userId
+        );
+
+        if (!users[0]) {
+            throw new Error("USER_NOT_FOUND");
+        }
+
+        // 지역 유효성 검사
+        const mapList = [
+            "서울", "인천", "경기", "강원", "충북",
+            "충남", "대전", "전북", "전남", "광주",
+            "경북", "경남", "대구", "울산", "부산"
+        ];
+
+        if (!mapList.includes(selectedMap)) {
+            throw new Error("INVALID_MAP");
+        }
+
+        // 이미 해금한 지역인지 확인
+        const [existingMap] = await db.executeQueryForTransaction(
+            connection,
+            "SELECT map FROM map WHERE user_id = ? AND map = ?",
+            userId,
+            selectedMap
+        );
+
+        if (existingMap) {
+            await connection.rollback();
+            transactionStarted = false;
+
+            return {
+                code: AUTH_RESULT.NOT_VALID,
+                message: "이미 해금한 지역입니다."
+            };
+        }
+
+        // 지역 해금 아이템 ID 조회
+        const items = await db.executeQueryForTransaction(
+            connection,
+            "SELECT id FROM item WHERE value = ? AND type = ?",
+            "region_unlock",
+            "usage_item"
+        );
+
+        if (!items[0]) {
+            throw new Error("REGION_UNLOCK_ITEM_NOT_FOUND");
+        }
+
+        const itemId = items[0].id;
+
+        // 아이템 수량 확인 및 잠금
+        const [inventory] = await db.executeQueryForTransaction(
+            connection,
+            "SELECT quantity FROM inventory WHERE user_id = ? AND item_id = ? FOR UPDATE",
+            userId,
+            itemId
+        );
+
+        if (!inventory || Number(inventory.quantity) <= 0) {
+            await connection.rollback();
+            transactionStarted = false;
+
+            return {
+                code: AUTH_RESULT.NOT_VALID,
+                message: "지역 해금 아이템이 부족합니다."
+            };
+        }
+
+        // 아이템 1개 차감
+        const itemUpdate = await db.executeQueryForTransaction(
+            connection,
+            "UPDATE inventory SET quantity = quantity - 1 WHERE user_id = ? AND item_id = ? AND quantity > 0",
+            userId,
+            itemId
+        );
+
+        if (itemUpdate.affectedRows !== 1) {
+            throw new Error("ITEM_CONSUME_FAILED");
+        }
+
+        // 지역 추가
+        const mapResult = await newMap(userId, selectedMap, connection);
+
+        if (mapResult.code !== AUTH_RESULT.SUCCESS) {
+            throw new Error("MAP_INSERT_FAILED");
+        }
+
+        await connection.commit();
+        transactionStarted = false;
+
+        return {
+            code: AUTH_RESULT.SUCCESS,
+            message: "지역 해금 성공",
+            data: {
+                map: selectedMap,
+                quantity: Number(inventory.quantity) - 1
+            }
+        };
+
+    } catch (e) {
+        if (transactionStarted) {
+            await connection.rollback();
+            transactionStarted = false;
+        }
+
+        console.log("[ERROR] Failed Unlock Map:", e);
+
+        return {
+            code: AUTH_RESULT.FAILED,
+            message: "지역 해금 실패"
+        };
+
+    } finally {
+        connection.release();
+    }
+}
+
+// 사용자의 해금 지역 조회
+async function getUserMaps(userId) {
+    const query = `
+        SELECT map
+        FROM map
+        WHERE user_id = ?
+    `;
+
+    return await db.executeQueryV(query, userId);
+}
+
+// 사용자의 지역 해금 여부 확인
+async function isMapUnlocked(userId, map) {
+    const query = `
+        SELECT id
+        FROM map
+        WHERE user_id = ?
+          AND map = ?
+        LIMIT 1
+    `;
+
+    const result = await db.executeQueryV(query, userId, map);
+    return result.length > 0;
+}
 /**
  * 예측 데이터 등록 및 포인트 차감
  */
@@ -645,6 +799,7 @@ async function getUnsettledForecasts() {
     return await db.executeQueryV(query);
 }
 
+
 // 예측 정산 처리
 async function settleForecast(forecastId, isCorrect, reward) {
     const connection = await db.getConnection();
@@ -652,9 +807,9 @@ async function settleForecast(forecastId, isCorrect, reward) {
     try {
         await connection.beginTransaction();
 
-        // 정산 대상 잠금
+        // 1. 정산 대상 예측 잠금
         const [rows] = await connection.execute(
-            `SELECT id, user_id, is_settled
+            `SELECT id, user_id, is_settled, used_point
              FROM forecast
              WHERE id = ?
              FOR UPDATE`,
@@ -666,21 +821,96 @@ async function settleForecast(forecastId, isCorrect, reward) {
             return false;
         }
 
-        // 정답이면 포인트 지급
+        const forecast = rows[0];
+        const userId = forecast.user_id;
+
+        // 2. 사용자 연승 기록 잠금
+        const [users] = await connection.execute(
+            `SELECT current_streak
+             FROM user
+             WHERE id = ?
+             FOR UPDATE`,
+            [userId]
+        );
+
+        if (users.length === 0) {
+            throw new Error("사용자를 찾을 수 없습니다.");
+        }
+
+        const currentStreak = users[0].current_streak;
+
+        let pointReward = 0;
+        let nextStreak = currentStreak;
+
         if (isCorrect) {
-            const [result] = await connection.execute(
-                `UPDATE user
-                SET point = point + ?
-                WHERE id = ?`,
-                [reward, rows[0].user_id]
+            // 정답: 보상 지급 및 연승 증가
+            pointReward = reward;
+            nextStreak = currentStreak + 1;
+
+        } else {
+            // 오답: 배팅 실패 반환권 확인
+            const [refundItems] = await connection.execute(
+                `SELECT i.id, inv.quantity
+                 FROM item i
+                 JOIN inventory inv ON inv.item_id = i.id
+                 WHERE inv.user_id = ?
+                   AND i.value = 'bet_refund_25'
+                   AND inv.quantity > 0
+                 FOR UPDATE`,
+                [userId]
             );
 
-            if (result.affectedRows !== 1) {
-                throw new Error("포인트를 지급할 사용자를 찾을 수 없습니다.");
+            if (refundItems.length > 0) {
+                // 배팅 금액의 25% 반환
+                pointReward += Math.floor(forecast.used_point * 0.25);
+
+                // 반환권 1개 차감
+                await connection.execute(
+                    `UPDATE inventory
+                     SET quantity = quantity - 1
+                     WHERE user_id = ? AND item_id = ?`,
+                    [userId, refundItems[0].id]
+                );
+            }
+
+            // 연승이 끊길 상황에서만 보호권 확인
+            if (currentStreak > 0) {
+                const [protectionItems] = await connection.execute(
+                    `SELECT i.id, inv.quantity
+                     FROM item i
+                     JOIN inventory inv ON inv.item_id = i.id
+                     WHERE inv.user_id = ?
+                       AND i.value = 'streak_protection'
+                       AND inv.quantity > 0
+                     FOR UPDATE`,
+                    [userId]
+                );
+
+                if (protectionItems.length > 0) {
+                    // 보호권 1개 차감, 기존 연승 유지
+                    await connection.execute(
+                        `UPDATE inventory
+                         SET quantity = quantity - 1
+                         WHERE user_id = ? AND item_id = ?`,
+                        [userId, protectionItems[0].id]
+                    );
+                } else {
+                    // 보호권이 없으면 연승 초기화
+                    nextStreak = 0;
+                }
             }
         }
 
-        // 정산 결과 저장
+        // 3. 포인트 및 연승 기록 업데이트
+        await connection.execute(
+            `UPDATE user
+             SET point = point + ?,
+                 current_streak = ?
+             WHERE id = ?`,
+            [pointReward, nextStreak, userId]
+        );
+
+        // 4. 정산 결과 저장
         await connection.execute(
             `UPDATE forecast
              SET is_correct = ?, is_settled = 1
@@ -699,6 +929,7 @@ async function settleForecast(forecastId, isCorrect, reward) {
         connection.release();
     }
 }
+
 
 
 async function showCollection(userId, filterType) {
@@ -992,6 +1223,9 @@ export default {
     equipItem,
     getUnsettledForecasts,
     settleForecast, 
+    unlockMap,
+    getUserMaps,
+    isMapUnlocked,
     newDamagochi,
     findDamagochiByUserId,
     eatExp,
