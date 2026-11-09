@@ -220,7 +220,7 @@ const server = http
                     return await userApi.showPoint(request, response);
                 }
                 if(requestUrl === "/equip") {
-                    return await userApi.equipItem(request, response, queryParams.get("type"), queryParams.get("item_id"));
+                    return await userApi.equipItem(request, response, queryParams.get("type"), queryParams.get("itemId"));
                 }
 
                 return sendPage(requestUrl, response); // 페이지 ㅂㅂ여주기 (/ranking.html → ./src/pages/ranking.html)
