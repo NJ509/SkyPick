@@ -12,6 +12,7 @@ import predictionApi from "./js/api/predictionController.js";
 import collectionApi from "./js/api/collection.js";
 import damagochiApi from "./js/api/damagochi.js";
 import { settleDueForecasts } from "./js/utils/forecastSettlement.js";
+import {weekRankTimeOut} from "./js/api/rank.js";
 
 const result = dotenv.config({path: new URL('../.env', import.meta.url)});
 const allowedOrigins = new Set(
@@ -75,6 +76,7 @@ class Database {
 
 const db = new Database();
 export { db };
+await weekRankTimeOut();
 
 function sendPage(requestUrl, response) {
     try {
