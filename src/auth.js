@@ -264,6 +264,29 @@ async function showPoint(userId) {
     }
 }
 
+async function showProfile(userId) {
+    const query = "SELECT equipped_profile_image, equipped_title FROM user WHERE id = ?";
+    try {
+        const rows = await db.executeQueryV(query, userId);
+
+        if (rows.length === 0) {
+            return {
+                code: AUTH_RESULT.NOT_FOUND,
+            };
+        }
+        return {
+            code: AUTH_RESULT.SUCCESS,
+            data: rows[0],
+        };
+    } catch (e) {
+        console.log(e);
+        return {
+            status: 500,
+            message: "Server OR DB ERROR",
+        };
+    }
+}
+
 /**
  * 인벤토리 업데이트 <br>
  * 인벤토리 변경 실패 시, 해당 유저의 인벤토리 조회해서 행 있는데, 실패한거면 status: 500, <br>
@@ -994,6 +1017,193 @@ async function equipItem(userId, type, itemId) {
     }
 }
 
+// damagochi ---------------------
+async function newDamagochi(userId) {
+    if(!userId) {
+        return {
+            code: AUTH_RESULT.REQUIRED_LOGIN,
+            message: "로그인이 필요합니다."
+        }
+    }
+
+    const query = "INSERT INTO damagochi VALUES (?, '고치', 1, 0)";
+
+    const result = await db.executeQueryV(query, userId);
+
+    if(!result.affectedRows > 0) {
+        return {
+            code: AUTH_RESULT.FAILED,
+            message: "다마고치 생성 실패"
+        }
+    }
+
+    return {
+        code: AUTH_RESULT.SUCCESS,
+        message: "다마고치 생성 완료"
+    }
+}
+
+async function findDamagochiByUserId(userId) {
+    if(!userId) {
+        return {
+            code: AUTH_RESULT.REQUIRED_LOGIN,
+            message: "로그인이 필요합니다."
+        }
+    }
+
+    const query = "SELECT * FROM damagochi WHERE user_id = ?";
+    const result = await db.executeQueryV(query, userId);
+
+    return result[0];
+}
+
+// 다마고치 연출은 프론트엔드에서 하고, 씻기 / 먹이기 전부 그냥 이거로 처리하면 될 듯
+async function eatExp(userId) {
+    if(!userId) {
+        return {
+            code: AUTH_RESULT.REQUIRED_LOGIN,
+            message: "로그인이 필요합니다."
+        }
+    }
+
+    const MAX_EXP = 100;
+    const EAT_EXP = 10;
+    const REQUIRED_EAT_POINT = 100;
+
+    let connection;
+
+    try {
+        connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        const [user] = await db.executeQueryForTransaction(
+            connection,
+            "SELECT point FROM user WHERE id = ? FOR UPDATE",
+            userId
+        );
+        if(!user) {
+            await connection.rollback();
+            return {
+                code: AUTH_RESULT.NOT_FOUND,
+                message: "유저를 찾을 수 없습니다."
+            };
+        }
+
+        const [damagochi] = await db.executeQueryForTransaction(
+            connection,
+            "SELECT exp, level FROM damagochi WHERE user_id = ? FOR UPDATE",
+            userId
+        );
+        if(!damagochi) {
+            await connection.rollback();
+            return {
+                code: AUTH_RESULT.NOT_FOUND,
+                message: "다마고치를 찾을 수 없습니다."
+            };
+        }
+
+        let currentPoint = Number(user.point);
+        let currentExp = Number(damagochi.exp);
+        let currentLevel = Number(damagochi.level);
+
+        if(currentPoint < REQUIRED_EAT_POINT) {
+            await connection.rollback();
+
+            return {
+                code: AUTH_RESULT.NOT_VALID,
+                message: "포인트가 부족합니다.",
+                data: { point: currentPoint, requiredPoint: REQUIRED_EAT_POINT }
+            };
+        }
+
+        currentPoint -= REQUIRED_EAT_POINT;
+        currentExp += EAT_EXP;
+        const gainedLevel = Math.floor(currentExp / MAX_EXP);
+        currentLevel += gainedLevel;
+        currentExp %= MAX_EXP;
+
+        const pointUpdate = await db.executeQueryForTransaction(
+            connection,
+            "UPDATE user SET point = point - ? WHERE id = ? AND point >= ?",
+            REQUIRED_EAT_POINT,
+            userId,
+            REQUIRED_EAT_POINT
+        );
+
+        const damagochiUpdate = await db.executeQueryForTransaction(
+            connection,
+            "UPDATE damagochi SET exp = ?, level = ? WHERE user_id = ?",
+            currentExp,
+            currentLevel,
+            userId
+        );
+
+        // /
+        if(pointUpdate.affectedRows !== 1 || damagochiUpdate.affectedRows !== 1) {
+            throw new Error("포인트 또는 다마고치 업데이트에 실패했습니다.");
+        }
+
+        await connection.commit();
+
+        return {
+            code: AUTH_RESULT.SUCCESS,
+            message: "다마고치 경험치가 증가했습니다.",
+            data: {
+                point: currentPoint,
+                exp: currentExp,
+                level: currentLevel,
+                leveledUp: gainedLevel > 0
+            }
+        };
+    } catch (error) {
+        if(connection) await connection.rollback();
+
+        console.error("[ERROR] eatExp Failed:", error);
+
+        return {
+            code: AUTH_RESULT.FAILED,
+            message: "다마고치 경험치 증가에 실패했습니다."
+        };
+
+
+
+    } finally {
+        if(connection) connection.release();
+    }
+}
+
+async function changeName(userId, name) {
+    if(!userId) {
+        return {
+            code: AUTH_RESULT.REQUIRED_LOGIN,
+            message: "로그인이 필요합니다."
+        }
+    }
+
+    if(typeof name !== "string" || !name.trim() || [...name.trim()].length > 30) {
+        return {
+            code: AUTH_RESULT.NOT_VALID,
+            message: "다마고치 이름은 1~30자로 입력해주세요."
+        };
+    }
+
+    const query = "UPDATE damagochi SET name = ? WHERE user_id = ?";
+    const result = await db.executeQueryV(query, name.trim(), userId);
+
+    if(result.affectedRows <= 0) {
+        return {
+            code: AUTH_RESULT.NOT_FOUND,
+            message: "다마고치를 찾을 수 없습니다."
+        }
+    }
+
+    return {
+        code: AUTH_RESULT.SUCCESS,
+        message: "다마고치 이름 변경 성공했음"
+    }
+}
+// -------------------------------
+
 export default {
     doLogin,
     signup,
@@ -1003,6 +1213,7 @@ export default {
     showPoint,
     inventoryUpdate,
     getInventory,
+    showProfile,
     getShopList,
     buyItem,
     showRanking,
@@ -1015,5 +1226,9 @@ export default {
     unlockMap,
     getUserMaps,
     isMapUnlocked,
+    newDamagochi,
+    findDamagochiByUserId,
+    eatExp,
+    changeName,
 };
 

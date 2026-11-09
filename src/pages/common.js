@@ -15,6 +15,31 @@ async function loadPoint() {
     }
 }
 
+async function loadProfile() {
+    const profileElement = document.getElementById("user-profile-image");
+    try {
+        const response = await fetch("/profile", {credentials: "include"});
+        const result = await response.json();
+
+        if (!response.ok) {
+            profileElement.hidden = true;
+            console.error(result.message);
+            return;
+        }
+
+        const imageName = result.data.equipped_profile_image;
+
+        profileElement.hidden = !imageName;
+
+        if (imageName) {
+            profileElement.src = "/images/" + imageName;
+        }
+    } catch (error) {
+        profileElement.hidden = true;
+        console.error(error);
+    }
+}
+
 async function loadRanking(type) {
     const weekendTab = document.getElementById("weekend-tab");
     const totalTab = document.getElementById("total-tab");
@@ -408,5 +433,280 @@ async function equipCollectionItem(type, itemId) {
         // console.log(result);
     } catch (error) {
         console.log("[FETCH ERROR]" +error);
+    }
+}
+
+async function loadDamagochi() {
+    const msg = document.getElementById("damagochi-message");
+    const emptyBox = document.getElementById("damagochi-empty");
+    const loginBox = document.getElementById("damagochi-login");
+    const againBtn = document.getElementById("damagochi-retry");
+
+    msg.textContent = "다마고치를 불러오는 중입니다.";
+    msg.className = "damagochi-message";
+
+    emptyBox.hidden = true;
+    loginBox.hidden = true;
+    againBtn.hidden = true;
+
+    try {
+        const res = await fetch("/damagochi", {
+            credentials: "include"
+        });
+
+        const result = await res.json();
+
+        if(res.status === 404) {
+            emptyBox.hidden = false;
+            msg.textContent = "새로운 친구와 함께 시작해보세요.";
+            return false;
+        }
+
+        if(!res.ok) {
+            if(res.status === 401) {
+                loginBox.hidden = false;
+            } else {
+                againBtn.hidden = false;
+            }
+
+            if(result.data && result.data.point !== undefined) {
+                document.getElementById("user-point").textContent = result.data.point + " P";
+            }
+
+            msg.textContent = result.message || "요청을 처리하지 못했습니다.";
+            msg.className = "damagochi-message error";
+            return false;
+        }
+
+        if(result.data.name !== undefined) {
+            document.getElementById("damagochi-name").textContent = result.data.name;
+            document.getElementById("damagochi-name-input").value = result.data.name;
+        }
+
+        document.getElementById("damagochi-level").textContent = "Lv. " + result.data.level;
+        document.getElementById("damagochi-exp").textContent = result.data.exp + " / 100 EXP";
+        document.getElementById("damagochi-exp-bar").value = result.data.exp;
+        document.getElementById("damagochi-exp-note").textContent = "다음 레벨까지 " + (100 - result.data.exp) + " EXP 남았어요.";
+
+        document.getElementById("damagochi-speech").textContent = "반가워요! 오늘도 함께 놀아요.";
+        msg.textContent = "먹이기와 씻기로 친구를 돌봐주세요.";
+
+        return true;
+    } catch (e) {
+        console.log("[FETCH ERROR] " +e);
+
+        againBtn.hidden = false;
+        msg.textContent = "다마고치를 불러오지 못했습니다. 다시 시도해주세요.";
+        msg.className = "damagochi-message error";
+
+        return false;
+    }
+}
+
+// 없으면 생성a
+async function createDamagochi() {
+    const msg = document.getElementById("damagochi-message");
+    const emptyBox = document.getElementById("damagochi-empty");
+    const loginBox = document.getElementById("damagochi-login");
+    const againBtn = document.getElementById("damagochi-retry");
+
+    msg.textContent = "새로운 친구를 만나고 있어요.";
+    msg.className = "damagochi-message";
+
+    try {
+        const res = await fetch("/damagochi", {
+            method: "POST",
+            credentials: "include"
+        });
+
+        const result = await res.json();
+
+        if(!res.ok && res.status !== 409) {
+            if(res.status === 401) {
+                emptyBox.hidden = true;
+                againBtn.hidden = true;
+                loginBox.hidden = false;
+            } else if(res.status === 404) {
+                againBtn.hidden = false;
+            }
+
+            if(result.data && result.data.point !== undefined) {
+                document.getElementById("user-point").textContent = result.data.point + " P";
+            }
+
+            msg.textContent = result.message || "요청을 처리하지 못했습니다.";
+            msg.className = "damagochi-message error";
+            return;
+        }
+
+        const loadOk = await loadDamagochi();
+
+        if(loadOk) {
+            msg.textContent = "구름 친구를 만났어요! 이름을 지어주고 함께 자라보세요.";
+            msg.className = "damagochi-message";
+        }
+    } catch (e) {
+        console.log("[FETCH ERROR] " +e);
+
+        againBtn.hidden = false;
+        msg.textContent = "다마고치를 만들지 못했습니다. 다시 불러와 확인해주세요.";
+        msg.className = "damagochi-message error";
+    }
+
+}
+
+// 다마고치 케어하기 (씻기/먹이기)
+async function careDamagochi(type) {
+    if(type !== "feed" && type !== "wash") {
+        return;
+    }
+
+    const box = document.getElementById("damagochi-stage");
+    const talk = document.getElementById("damagochi-speech");
+    const expText = document.getElementById("damagochi-reward");
+    const msg = document.getElementById("damagochi-message");
+    const point = document.getElementById("user-point");
+
+    // 효과만 다르게, API 똑같이
+    if(type === "feed") {
+        box.className = "damagochi-stage is-feeding";
+        talk.textContent = "아~ 맛있는 먹이를 먹어요!";
+        msg.textContent = "먹이를 주고 있어요.";
+    } else {
+        box.className = "damagochi-stage is-washing";
+        talk.textContent = "뽀득뽀득! 목욕하는 시간이에요.";
+        msg.textContent = "깨끗하게 씻고 있어요.";
+    }
+
+    msg.className = "damagochi-message";
+    expText.textContent = "";
+
+    try {
+        const res = await fetch("/damagochi/exp", {
+            method: "POST",
+            credentials: "include"
+        });
+
+        const result = await res.json();
+
+        if(!res.ok) {
+            if(res.status === 401) {
+                document.getElementById("damagochi-empty").hidden = true;
+                document.getElementById("damagochi-retry").hidden = true;
+                document.getElementById("damagochi-login").hidden = false;
+            } else if(res.status === 404) {
+                document.getElementById("damagochi-retry").hidden = false;
+            }
+
+            if(result.data && result.data.point !== undefined) {
+                point.textContent = result.data.point + " P";
+            }
+
+            msg.textContent = result.message || "요청을 처리하지 못했습니다.";
+            msg.className = "damagochi-message error";
+            box.className = "damagochi-stage";
+            talk.textContent = "다음에 다시 함께해요.";
+            return;
+        }
+
+        if(result.data.name !== undefined) {
+            document.getElementById("damagochi-name").textContent = result.data.name;
+            document.getElementById("damagochi-name-input").value = result.data.name;
+        }
+
+        document.getElementById("damagochi-level").textContent = "Lv. " + result.data.level;
+        document.getElementById("damagochi-exp").textContent = result.data.exp + " / 100 EXP";
+        document.getElementById("damagochi-exp-bar").value = result.data.exp;
+        document.getElementById("damagochi-exp-note").textContent = "다음 레벨까지 " + (100 - result.data.exp) + " EXP 남았어요.";
+        point.textContent = result.data.point + " P";
+
+        box.className += " is-rewarding";
+        expText.textContent = "+10 EXP";
+
+        if(type === "feed") {
+            talk.textContent = "냠냠! 정말 맛있어요.";
+            msg.textContent = "먹이기 완료! +10 EXP · -100 P";
+        } else {
+            talk.textContent = "보송보송! 기분이 좋아요.";
+            msg.textContent = "씻기 완료! +10 EXP · -100 P";
+        }
+
+        if(result.data.leveledUp) {
+            box.className += " is-leveling";
+            expText.textContent = "레벨업! +10 EXP";
+            msg.textContent += " · Lv. " + result.data.level + " 레벨업!";
+        }
+
+        setTimeout(function () {
+            box.className = "damagochi-stage";
+        }, 1600);
+    } catch (e) {
+        console.log("[FETCH ERROR] " +e);
+
+        msg.textContent = "요청 결과를 확인하지 못했습니다. 다시 불러와 상태를 확인해주세요.";
+        msg.className = "damagochi-message error";
+        document.getElementById("damagochi-retry").hidden = false;
+        box.className = "damagochi-stage";
+        talk.textContent = "다음에 다시 함께해요.";
+    }
+}
+
+async function changeDamagochiName(e) {
+    e.preventDefault();
+
+    const input = document.getElementById("damagochi-name-input");
+    const msg = document.getElementById("damagochi-message");
+    const petName = input.value.trim();
+
+    if(!petName || [...petName].length > 30) {
+        msg.textContent = "다마고치 이름은 1~30자로 입력해주세요.";
+        msg.className = "damagochi-message error";
+        return;
+    }
+
+    msg.textContent = "이름을 변경하고 있어요.";
+    msg.className = "damagochi-message";
+
+    try {
+        const res = await fetch("/damagochi/name", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({
+                name: petName
+            })
+        });
+
+        const result = await res.json();
+
+        if(!res.ok) {
+            if(res.status === 401) {
+                document.getElementById("damagochi-empty").hidden = true;
+                document.getElementById("damagochi-retry").hidden = true;
+                document.getElementById("damagochi-login").hidden = false;
+            } else if(res.status === 404) {
+                document.getElementById("damagochi-retry").hidden = false;
+            }
+
+            if(result.data && result.data.point !== undefined) {
+                document.getElementById("user-point").textContent = result.data.point + " P";
+            }
+
+            msg.textContent = result.message || "요청을 처리하지 못했습니다.";
+            msg.className = "damagochi-message error";
+            return;
+        }
+
+        document.getElementById("damagochi-name").textContent = petName;
+        input.value = petName;
+        msg.textContent = "친구의 이름을 변경했어요.";
+    } catch (e) {
+        console.log("[FETCH ERROR] " +e);
+
+        msg.textContent = "이름 변경 결과를 확인하지 못했습니다. 다시 불러와 확인해주세요.";
+        msg.className = "damagochi-message error";
+        document.getElementById("damagochi-retry").hidden = false;
     }
 }

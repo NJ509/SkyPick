@@ -375,12 +375,13 @@
                 <a class="nav-link" href="./prediction.html">예측 리스트</a>
                 <a class="nav-link" href="./shop.html">상점</a>
                 <a class="nav-link" href="./collection.html">도감</a>
+                <a class="nav-link" href="./damagochi.html">다마고치</a>
                 <a class="nav-link" href="./ranking.html">랭킹</a>
             </div>
 
             <div class="user-info">
                 <span id="user-point" class="point">- P</span>
-                <button class="profile-btn">프로필</button>
+                <img id="user-profile-image" class="profile-image" alt="프로필 이미지" hidden>
             </div>
         </div>
     </nav>
@@ -590,6 +591,7 @@
     <script src="./common.js"></script>
     <script>
         loadPoint();
+        loadProfile();
     </script>
 </body>
 </html>
