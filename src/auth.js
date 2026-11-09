@@ -622,6 +622,7 @@ async function getUnsettledForecasts() {
     return await db.executeQueryV(query);
 }
 
+
 // 예측 정산 처리
 async function settleForecast(forecastId, isCorrect, reward) {
     const connection = await db.getConnection();
@@ -629,9 +630,9 @@ async function settleForecast(forecastId, isCorrect, reward) {
     try {
         await connection.beginTransaction();
 
-        // 정산 대상 잠금
+        // 1. 정산 대상 예측 잠금
         const [rows] = await connection.execute(
-            `SELECT id, user_id, is_settled
+            `SELECT id, user_id, is_settled, used_point
              FROM forecast
              WHERE id = ?
              FOR UPDATE`,
@@ -643,21 +644,96 @@ async function settleForecast(forecastId, isCorrect, reward) {
             return false;
         }
 
-        // 정답이면 포인트 지급
+        const forecast = rows[0];
+        const userId = forecast.user_id;
+
+        // 2. 사용자 연승 기록 잠금
+        const [users] = await connection.execute(
+            `SELECT current_streak
+             FROM user
+             WHERE id = ?
+             FOR UPDATE`,
+            [userId]
+        );
+
+        if (users.length === 0) {
+            throw new Error("사용자를 찾을 수 없습니다.");
+        }
+
+        const currentStreak = users[0].current_streak;
+
+        let pointReward = 0;
+        let nextStreak = currentStreak;
+
         if (isCorrect) {
-            const [result] = await connection.execute(
-                `UPDATE user
-                SET point = point + ?
-                WHERE id = ?`,
-                [reward, rows[0].user_id]
+            // 정답: 보상 지급 및 연승 증가
+            pointReward = reward;
+            nextStreak = currentStreak + 1;
+
+        } else {
+            // 오답: 배팅 실패 반환권 확인
+            const [refundItems] = await connection.execute(
+                `SELECT i.id, inv.quantity
+                 FROM item i
+                 JOIN inventory inv ON inv.item_id = i.id
+                 WHERE inv.user_id = ?
+                   AND i.value = 'bet_refund_25'
+                   AND inv.quantity > 0
+                 FOR UPDATE`,
+                [userId]
             );
 
-            if (result.affectedRows !== 1) {
-                throw new Error("포인트를 지급할 사용자를 찾을 수 없습니다.");
+            if (refundItems.length > 0) {
+                // 배팅 금액의 25% 반환
+                pointReward += Math.floor(forecast.used_point * 0.25);
+
+                // 반환권 1개 차감
+                await connection.execute(
+                    `UPDATE inventory
+                     SET quantity = quantity - 1
+                     WHERE user_id = ? AND item_id = ?`,
+                    [userId, refundItems[0].id]
+                );
+            }
+
+            // 연승이 끊길 상황에서만 보호권 확인
+            if (currentStreak > 0) {
+                const [protectionItems] = await connection.execute(
+                    `SELECT i.id, inv.quantity
+                     FROM item i
+                     JOIN inventory inv ON inv.item_id = i.id
+                     WHERE inv.user_id = ?
+                       AND i.value = 'streak_protection'
+                       AND inv.quantity > 0
+                     FOR UPDATE`,
+                    [userId]
+                );
+
+                if (protectionItems.length > 0) {
+                    // 보호권 1개 차감, 기존 연승 유지
+                    await connection.execute(
+                        `UPDATE inventory
+                         SET quantity = quantity - 1
+                         WHERE user_id = ? AND item_id = ?`,
+                        [userId, protectionItems[0].id]
+                    );
+                } else {
+                    // 보호권이 없으면 연승 초기화
+                    nextStreak = 0;
+                }
             }
         }
 
-        // 정산 결과 저장
+        // 3. 포인트 및 연승 기록 업데이트
+        await connection.execute(
+            `UPDATE user
+             SET point = point + ?,
+                 current_streak = ?
+             WHERE id = ?`,
+            [pointReward, nextStreak, userId]
+        );
+
+        // 4. 정산 결과 저장
         await connection.execute(
             `UPDATE forecast
              SET is_correct = ?, is_settled = 1
@@ -676,6 +752,7 @@ async function settleForecast(forecastId, isCorrect, reward) {
         connection.release();
     }
 }
+
 
 
 async function showCollection(userId, filterType) {
