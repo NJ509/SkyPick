@@ -15,6 +15,31 @@ async function loadPoint() {
     }
 }
 
+async function loadProfile() {
+    const profileElement = document.getElementById("user-profile-image");
+    try {
+        const response = await fetch("/profile", {credentials: "include"});
+        const result = await response.json();
+
+        if (!response.ok) {
+            profileElement.hidden = true;
+            console.error(result.message);
+            return;
+        }
+
+        const imageName = result.data.equipped_profile_image;
+
+        profileElement.hidden = !imageName;
+
+        if (imageName) {
+            profileElement.src = "/images/" + imageName;
+        }
+    } catch (error) {
+        profileElement.hidden = true;
+        console.error(error);
+    }
+}
+
 async function loadRanking(type) {
     const weekendTab = document.getElementById("weekend-tab");
     const totalTab = document.getElementById("total-tab");

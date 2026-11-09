@@ -61,3 +61,10 @@ body {
     color: #2563eb;
     font-weight: 600;
 }
+
+.profile-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}

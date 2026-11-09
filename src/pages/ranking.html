@@ -324,7 +324,7 @@
 
             <div class="user-info">
                 <span id="user-point" class="point">- P</span>
-                <button class="profile-btn">프로필</button>
+                <img id="user-profile-image" class="profile-image" alt="프로필 이미지" hidden>
             </div>
         </div>
     </nav>
@@ -396,6 +396,7 @@
         // 첨 열면 주간랭킹
         loadPoint();
         loadRanking("weekend");
+        loadProfile();
     </script>
 </body>
 </html>

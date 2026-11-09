@@ -264,6 +264,29 @@ async function showPoint(userId) {
     }
 }
 
+async function showProfile(userId) {
+    const query = "SELECT equipped_profile_image, equipped_title FROM user WHERE id = ?";
+    try {
+        const rows = await db.executeQueryV(query, userId);
+
+        if (rows.length === 0) {
+            return {
+                code: AUTH_RESULT.NOT_FOUND,
+            };
+        }
+        return {
+            code: AUTH_RESULT.SUCCESS,
+            data: rows[0],
+        };
+    } catch (e) {
+        console.log(e);
+        return {
+            status: 500,
+            message: "Server OR DB ERROR",
+        };
+    }
+}
+
 /**
  * 인벤토리 업데이트 <br>
  * 인벤토리 변경 실패 시, 해당 유저의 인벤토리 조회해서 행 있는데, 실패한거면 status: 500, <br>
@@ -959,6 +982,7 @@ export default {
     showPoint,
     inventoryUpdate,
     getInventory,
+    showProfile,
     getShopList,
     buyItem,
     showRanking,

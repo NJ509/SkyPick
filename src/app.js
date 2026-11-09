@@ -219,6 +219,9 @@ const server = http
                 if(requestUrl === "/point") {
                     return await userApi.showPoint(request, response);
                 }
+                if (requestUrl === "/profile") {
+                    return await userApi.showProfile(request, response);
+                }
                 if(requestUrl === "/equip") {
                     return await userApi.equipItem(request, response, queryParams.get("type"), queryParams.get("itemId"));
                 }
