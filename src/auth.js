@@ -264,6 +264,29 @@ async function showPoint(userId) {
     }
 }
 
+async function showProfile(userId) {
+    const query = "SELECT equipped_profile_image, equipped_title FROM user WHERE id = ?";
+    try {
+        const rows = await db.executeQueryV(query, userId);
+
+        if (rows.length === 0) {
+            return {
+                code: AUTH_RESULT.NOT_FOUND,
+            };
+        }
+        return {
+            code: AUTH_RESULT.SUCCESS,
+            data: rows[0],
+        };
+    } catch (e) {
+        console.log(e);
+        return {
+            status: 500,
+            message: "Server OR DB ERROR",
+        };
+    }
+}
+
 /**
  * 인벤토리 업데이트 <br>
  * 인벤토리 변경 실패 시, 해당 유저의 인벤토리 조회해서 행 있는데, 실패한거면 status: 500, <br>
@@ -490,6 +513,160 @@ async function buyItem(userId, itemId) {
     }
 }
 
+// 지역 해금
+async function unlockMap(userId, selectedMap) {
+    const connection = await db.getConnection();
+    let transactionStarted = false;
+
+    try {
+        await connection.beginTransaction();
+        transactionStarted = true;
+
+        // 사용자 행 잠금
+        const users = await db.executeQueryForTransaction(
+            connection,
+            "SELECT id FROM user WHERE id = ? FOR UPDATE",
+            userId
+        );
+
+        if (!users[0]) {
+            throw new Error("USER_NOT_FOUND");
+        }
+
+        // 지역 유효성 검사
+        const mapList = [
+            "서울", "인천", "경기", "강원", "충북",
+            "충남", "대전", "전북", "전남", "광주",
+            "경북", "경남", "대구", "울산", "부산"
+        ];
+
+        if (!mapList.includes(selectedMap)) {
+            throw new Error("INVALID_MAP");
+        }
+
+        // 이미 해금한 지역인지 확인
+        const [existingMap] = await db.executeQueryForTransaction(
+            connection,
+            "SELECT map FROM map WHERE user_id = ? AND map = ?",
+            userId,
+            selectedMap
+        );
+
+        if (existingMap) {
+            await connection.rollback();
+            transactionStarted = false;
+
+            return {
+                code: AUTH_RESULT.NOT_VALID,
+                message: "이미 해금한 지역입니다."
+            };
+        }
+
+        // 지역 해금 아이템 ID 조회
+        const items = await db.executeQueryForTransaction(
+            connection,
+            "SELECT id FROM item WHERE value = ? AND type = ?",
+            "region_unlock",
+            "usage_item"
+        );
+
+        if (!items[0]) {
+            throw new Error("REGION_UNLOCK_ITEM_NOT_FOUND");
+        }
+
+        const itemId = items[0].id;
+
+        // 아이템 수량 확인 및 잠금
+        const [inventory] = await db.executeQueryForTransaction(
+            connection,
+            "SELECT quantity FROM inventory WHERE user_id = ? AND item_id = ? FOR UPDATE",
+            userId,
+            itemId
+        );
+
+        if (!inventory || Number(inventory.quantity) <= 0) {
+            await connection.rollback();
+            transactionStarted = false;
+
+            return {
+                code: AUTH_RESULT.NOT_VALID,
+                message: "지역 해금 아이템이 부족합니다."
+            };
+        }
+
+        // 아이템 1개 차감
+        const itemUpdate = await db.executeQueryForTransaction(
+            connection,
+            "UPDATE inventory SET quantity = quantity - 1 WHERE user_id = ? AND item_id = ? AND quantity > 0",
+            userId,
+            itemId
+        );
+
+        if (itemUpdate.affectedRows !== 1) {
+            throw new Error("ITEM_CONSUME_FAILED");
+        }
+
+        // 지역 추가
+        const mapResult = await newMap(userId, selectedMap, connection);
+
+        if (mapResult.code !== AUTH_RESULT.SUCCESS) {
+            throw new Error("MAP_INSERT_FAILED");
+        }
+
+        await connection.commit();
+        transactionStarted = false;
+
+        return {
+            code: AUTH_RESULT.SUCCESS,
+            message: "지역 해금 성공",
+            data: {
+                map: selectedMap,
+                quantity: Number(inventory.quantity) - 1
+            }
+        };
+
+    } catch (e) {
+        if (transactionStarted) {
+            await connection.rollback();
+            transactionStarted = false;
+        }
+
+        console.log("[ERROR] Failed Unlock Map:", e);
+
+        return {
+            code: AUTH_RESULT.FAILED,
+            message: "지역 해금 실패"
+        };
+
+    } finally {
+        connection.release();
+    }
+}
+
+// 사용자의 해금 지역 조회
+async function getUserMaps(userId) {
+    const query = `
+        SELECT map
+        FROM map
+        WHERE user_id = ?
+    `;
+
+    return await db.executeQueryV(query, userId);
+}
+
+// 사용자의 지역 해금 여부 확인
+async function isMapUnlocked(userId, map) {
+    const query = `
+        SELECT id
+        FROM map
+        WHERE user_id = ?
+          AND map = ?
+        LIMIT 1
+    `;
+
+    const result = await db.executeQueryV(query, userId, map);
+    return result.length > 0;
+}
 /**
  * 예측 데이터 등록 및 포인트 차감
  */
@@ -622,6 +799,7 @@ async function getUnsettledForecasts() {
     return await db.executeQueryV(query);
 }
 
+
 // 예측 정산 처리
 async function settleForecast(forecastId, isCorrect, reward) {
     const connection = await db.getConnection();
@@ -629,9 +807,9 @@ async function settleForecast(forecastId, isCorrect, reward) {
     try {
         await connection.beginTransaction();
 
-        // 정산 대상 잠금
+        // 1. 정산 대상 예측 잠금
         const [rows] = await connection.execute(
-            `SELECT id, user_id, is_settled
+            `SELECT id, user_id, is_settled, used_point
              FROM forecast
              WHERE id = ?
              FOR UPDATE`,
@@ -643,21 +821,106 @@ async function settleForecast(forecastId, isCorrect, reward) {
             return false;
         }
 
-        // 정답이면 포인트 지급
+        const forecast = rows[0];
+        const userId = forecast.user_id;
+
+        // 2. 사용자 연승 기록 잠금
+        const [users] = await connection.execute(
+            `SELECT current_streak
+             FROM user
+             WHERE id = ?
+             FOR UPDATE`,
+            [userId]
+        );
+
+        if (users.length === 0) {
+            throw new Error("사용자를 찾을 수 없습니다.");
+        }
+
+        const currentStreak = users[0].current_streak;
+
+        let pointReward = 0;
+        let nextStreak = currentStreak;
+
         if (isCorrect) {
-            const [result] = await connection.execute(
-                `UPDATE user
-                SET point = point + ?
-                WHERE id = ?`,
-                [reward, rows[0].user_id]
+            // 정답: 보상 지급 및 연승 증가
+            pointReward = reward;
+            nextStreak = currentStreak + 1;
+
+        } else {
+            // 오답: 배팅 실패 반환권 확인
+            const [refundItems] = await connection.execute(
+                `SELECT i.id, inv.quantity
+                 FROM item i
+                 JOIN inventory inv ON inv.item_id = i.id
+                 WHERE inv.user_id = ?
+                   AND i.value = 'bet_refund_25'
+                   AND inv.quantity > 0
+                 FOR UPDATE`,
+                [userId]
             );
 
-            if (result.affectedRows !== 1) {
-                throw new Error("포인트를 지급할 사용자를 찾을 수 없습니다.");
+            if (refundItems.length > 0) {
+                // 배팅 금액의 25% 반환
+                pointReward += Math.floor(forecast.used_point * 0.25);
+
+                // 반환권 1개 차감
+                await connection.execute(
+                    `UPDATE inventory
+                     SET quantity = quantity - 1
+                     WHERE user_id = ? AND item_id = ?`,
+                    [userId, refundItems[0].id]
+                );
+            }
+
+            // 연승이 끊길 상황에서만 보호권 확인
+            if (currentStreak > 0) {
+                const [protectionItems] = await connection.execute(
+                    `SELECT i.id, inv.quantity
+                     FROM item i
+                     JOIN inventory inv ON inv.item_id = i.id
+                     WHERE inv.user_id = ?
+                       AND i.value = 'streak_protection'
+                       AND inv.quantity > 0
+                     FOR UPDATE`,
+                    [userId]
+                );
+
+                if (protectionItems.length > 0) {
+                    // 보호권 1개 차감, 기존 연승 유지
+                    await connection.execute(
+                        `UPDATE inventory
+                         SET quantity = quantity - 1
+                         WHERE user_id = ? AND item_id = ?`,
+                        [userId, protectionItems[0].id]
+                    );
+                } else {
+                    // 보호권이 없으면 연승 초기화
+                    nextStreak = 0;
+                }
             }
         }
 
-        // 정산 결과 저장
+        // 3. 포인트 및 연승 기록 업데이트
+        await connection.execute(
+            `UPDATE user
+             SET point = point + ?,
+                 current_streak = ?
+             WHERE id = ?`,
+            [pointReward, nextStreak, userId]
+        );
+
+        // 4. 주간 랭킹 통계 누적
+        await connection.execute(
+            `INSERT INTO weekly_stat (user_id, success_count, earned_point)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                success_count = success_count + VALUES(success_count),
+                earned_point = earned_point + VALUES(earned_point)`,
+            [userId, isCorrect ? 1 : 0, pointReward]
+        );
+
+        // 5. 정산 결과 저장
         await connection.execute(
             `UPDATE forecast
              SET is_correct = ?, is_settled = 1
@@ -676,6 +939,7 @@ async function settleForecast(forecastId, isCorrect, reward) {
         connection.release();
     }
 }
+
 
 
 async function showCollection(userId, filterType) {
@@ -763,6 +1027,193 @@ async function equipItem(userId, type, itemId) {
     }
 }
 
+// damagochi ---------------------
+async function newDamagochi(userId) {
+    if(!userId) {
+        return {
+            code: AUTH_RESULT.REQUIRED_LOGIN,
+            message: "로그인이 필요합니다."
+        }
+    }
+
+    const query = "INSERT INTO damagochi VALUES (?, '고치', 1, 0)";
+
+    const result = await db.executeQueryV(query, userId);
+
+    if(!result.affectedRows > 0) {
+        return {
+            code: AUTH_RESULT.FAILED,
+            message: "다마고치 생성 실패"
+        }
+    }
+
+    return {
+        code: AUTH_RESULT.SUCCESS,
+        message: "다마고치 생성 완료"
+    }
+}
+
+async function findDamagochiByUserId(userId) {
+    if(!userId) {
+        return {
+            code: AUTH_RESULT.REQUIRED_LOGIN,
+            message: "로그인이 필요합니다."
+        }
+    }
+
+    const query = "SELECT * FROM damagochi WHERE user_id = ?";
+    const result = await db.executeQueryV(query, userId);
+
+    return result[0];
+}
+
+// 다마고치 연출은 프론트엔드에서 하고, 씻기 / 먹이기 전부 그냥 이거로 처리하면 될 듯
+async function eatExp(userId) {
+    if(!userId) {
+        return {
+            code: AUTH_RESULT.REQUIRED_LOGIN,
+            message: "로그인이 필요합니다."
+        }
+    }
+
+    const MAX_EXP = 100;
+    const EAT_EXP = 10;
+    const REQUIRED_EAT_POINT = 100;
+
+    let connection;
+
+    try {
+        connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        const [user] = await db.executeQueryForTransaction(
+            connection,
+            "SELECT point FROM user WHERE id = ? FOR UPDATE",
+            userId
+        );
+        if(!user) {
+            await connection.rollback();
+            return {
+                code: AUTH_RESULT.NOT_FOUND,
+                message: "유저를 찾을 수 없습니다."
+            };
+        }
+
+        const [damagochi] = await db.executeQueryForTransaction(
+            connection,
+            "SELECT exp, level FROM damagochi WHERE user_id = ? FOR UPDATE",
+            userId
+        );
+        if(!damagochi) {
+            await connection.rollback();
+            return {
+                code: AUTH_RESULT.NOT_FOUND,
+                message: "다마고치를 찾을 수 없습니다."
+            };
+        }
+
+        let currentPoint = Number(user.point);
+        let currentExp = Number(damagochi.exp);
+        let currentLevel = Number(damagochi.level);
+
+        if(currentPoint < REQUIRED_EAT_POINT) {
+            await connection.rollback();
+
+            return {
+                code: AUTH_RESULT.NOT_VALID,
+                message: "포인트가 부족합니다.",
+                data: { point: currentPoint, requiredPoint: REQUIRED_EAT_POINT }
+            };
+        }
+
+        currentPoint -= REQUIRED_EAT_POINT;
+        currentExp += EAT_EXP;
+        const gainedLevel = Math.floor(currentExp / MAX_EXP);
+        currentLevel += gainedLevel;
+        currentExp %= MAX_EXP;
+
+        const pointUpdate = await db.executeQueryForTransaction(
+            connection,
+            "UPDATE user SET point = point - ? WHERE id = ? AND point >= ?",
+            REQUIRED_EAT_POINT,
+            userId,
+            REQUIRED_EAT_POINT
+        );
+
+        const damagochiUpdate = await db.executeQueryForTransaction(
+            connection,
+            "UPDATE damagochi SET exp = ?, level = ? WHERE user_id = ?",
+            currentExp,
+            currentLevel,
+            userId
+        );
+
+        // /
+        if(pointUpdate.affectedRows !== 1 || damagochiUpdate.affectedRows !== 1) {
+            throw new Error("포인트 또는 다마고치 업데이트에 실패했습니다.");
+        }
+
+        await connection.commit();
+
+        return {
+            code: AUTH_RESULT.SUCCESS,
+            message: "다마고치 경험치가 증가했습니다.",
+            data: {
+                point: currentPoint,
+                exp: currentExp,
+                level: currentLevel,
+                leveledUp: gainedLevel > 0
+            }
+        };
+    } catch (error) {
+        if(connection) await connection.rollback();
+
+        console.error("[ERROR] eatExp Failed:", error);
+
+        return {
+            code: AUTH_RESULT.FAILED,
+            message: "다마고치 경험치 증가에 실패했습니다."
+        };
+
+
+
+    } finally {
+        if(connection) connection.release();
+    }
+}
+
+async function changeName(userId, name) {
+    if(!userId) {
+        return {
+            code: AUTH_RESULT.REQUIRED_LOGIN,
+            message: "로그인이 필요합니다."
+        }
+    }
+
+    if(typeof name !== "string" || !name.trim() || [...name.trim()].length > 30) {
+        return {
+            code: AUTH_RESULT.NOT_VALID,
+            message: "다마고치 이름은 1~30자로 입력해주세요."
+        };
+    }
+
+    const query = "UPDATE damagochi SET name = ? WHERE user_id = ?";
+    const result = await db.executeQueryV(query, name.trim(), userId);
+
+    if(result.affectedRows <= 0) {
+        return {
+            code: AUTH_RESULT.NOT_FOUND,
+            message: "다마고치를 찾을 수 없습니다."
+        }
+    }
+
+    return {
+        code: AUTH_RESULT.SUCCESS,
+        message: "다마고치 이름 변경 성공했음"
+    }
+}
+// -------------------------------
+
 export default {
     doLogin,
     signup,
@@ -772,6 +1223,7 @@ export default {
     showPoint,
     inventoryUpdate,
     getInventory,
+    showProfile,
     getShopList,
     buyItem,
     showRanking,
@@ -781,5 +1233,12 @@ export default {
     equipItem,
     getUnsettledForecasts,
     settleForecast, 
+    unlockMap,
+    getUserMaps,
+    isMapUnlocked,
+    newDamagochi,
+    findDamagochiByUserId,
+    eatExp,
+    changeName,
 };
 

@@ -10,7 +10,9 @@ import shopApi from "./js/api/shop.js";
 import weatherApi from "./js/api/weather.js";
 import predictionApi from "./js/api/predictionController.js";
 import collectionApi from "./js/api/collection.js";
+import damagochiApi from "./js/api/damagochi.js";
 import { settleDueForecasts } from "./js/utils/forecastSettlement.js";
+import {weekRankTimeOut} from "./js/api/rank.js";
 
 const result = dotenv.config({path: new URL('../.env', import.meta.url)});
 const allowedOrigins = new Set(
@@ -74,6 +76,7 @@ class Database {
 
 const db = new Database();
 export { db };
+await weekRankTimeOut();
 
 function sendPage(requestUrl, response) {
     try {
@@ -201,20 +204,29 @@ const server = http
                     return await weatherApi.showWeather(request, response, queryParams);
                 }
                 if (requestUrl === "/api/predictionController") {
-                  return await predictionApi.showPredictionList(
-                      request,
-                      response,
-                      queryParams
-                  );
-              }
+                    return await predictionApi.showPredictionList(
+                        request,
+                        response,
+                        queryParams
+                    );
+                }
                 if(requestUrl === "/collection") {
                     return await collectionApi.showCollection(request, response, queryParams.get("type"));
+                }
+                if(requestUrl === "/damagochi") {
+                    return await damagochiApi.showDamagochi(request, response);
                 }
                 if(requestUrl === "/point") {
                     return await userApi.showPoint(request, response);
                 }
+                if (requestUrl === "/profile") {
+                    return await userApi.showProfile(request, response);
+                }
                 if(requestUrl === "/equip") {
-                    return await userApi.equipItem(request, response, queryParams.get("type"), queryParams.get("item_id"));
+                    return await userApi.equipItem(request, response, queryParams.get("type"), queryParams.get("itemId"));
+                }
+                if (requestUrl === "/map/list") {
+                    return await shopApi.getUserMaps(request, response);
                 }
 
                 return sendPage(requestUrl, response); // 페이지 ㅂㅂ여주기 (/ranking.html → ./src/pages/ranking.html)
@@ -250,8 +262,20 @@ const server = http
                 if (requestUrl === "/shop") {
                     return await shopApi.buyItem(request, response);
                 }
+                if (requestUrl === "/damagochi") {
+                    return await damagochiApi.newDamagochi(request, response);
+                }
+                if (requestUrl === "/damagochi/exp") {
+                    return await damagochiApi.eatExp(request, response);
+                }
+                if (requestUrl === "/damagochi/name") {
+                    return await damagochiApi.changeName(request, response);
+                }
                 if (requestUrl === "/api/predictionController") {
                     return await predictionApi.createPrediction(request, response);
+                }
+                if (requestUrl === "/map/unlock") {
+                    return await shopApi.unlockMap(request, response);
                 }
 
 
